@@ -24,6 +24,9 @@
     <Compile Include="AI\__init__.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="data.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="main.py">
       <SubType>Code</SubType>
     </Compile>
@@ -39,7 +42,7 @@
     <Compile Include="player.py">
       <SubType>Code</SubType>
     </Compile>
-	 <Compile Include="actions.py">
+    <Compile Include="actions.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
