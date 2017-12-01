@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27004.2006
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Machine Learning in Games ProtoType", "Machine Learning in Games ProtoType\Machine Learning in Games ProtoType.pyproj", "{0463A2B2-A021-4B97-96C7-A70F68D0D41D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0463A2B2-A021-4B97-96C7-A70F68D0D41D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0463A2B2-A021-4B97-96C7-A70F68D0D41D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1AC7F518-6923-411D-BF48-935304A4271A}
+	EndGlobalSection
+EndGlobal
