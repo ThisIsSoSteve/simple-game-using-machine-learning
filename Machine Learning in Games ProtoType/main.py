@@ -87,12 +87,6 @@ def train_ai(did_player_win, players_turn_first):
         training_data_x = np.concatenate((training_data_x, player_training_data.data), axis=0)
         training_data_y = np.concatenate((training_data_y, ai_training_data.data[:, :4]), axis=0)
         
-    #Return the unique rows of a 2D array
-
-    #a = np.array([[1, 0, 0], [1, 0, 0], [2, 3, 4]])
-    #np.unique(a, axis=0)
-    #array([[1, 0, 0], [2, 3, 4]])
-
     #print(training_data_x)
     #print(training_data_y)
 
@@ -118,7 +112,7 @@ while(play_game):
 
         if is_valid and players_action > 0 and players_action <= 5:
 
-            player_training_data.record(players_action, user, ai)
+            player_training_data.record(players_action, ai, user) #Stores as AI would see ((ai, user) NOT (user, ai))
             game_actions.display_player_chosen_action(user, players_action)
 
             if players_action == 5:
@@ -137,6 +131,7 @@ while(play_game):
             data = player_training_data.data[-1] 
 
         data = np.reshape(data, (-1, 10))
+        
         ais_action = use.use_simple_model(checkpoint, data) + 1
         print('ai choice number: {}'.format(ais_action))
 
