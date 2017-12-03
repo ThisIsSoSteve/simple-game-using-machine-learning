@@ -32,6 +32,8 @@ training_data_y = np.empty((0,4))
 
 starting_stats = []
 
+step = 0
+
 def set_defaults():
 
     global player_goes_first
@@ -91,11 +93,10 @@ def train_ai(did_player_win, players_turn_first):
     #print(training_data_y)
 
     global checkpoint
+    global step
 
-    current_accuracy = 0.0
 
-    #while current_accuracy == 0.0:
-    checkpoint, current_accuracy = train.train_simple_model(training_data_x, training_data_y, checkpoint)
+    checkpoint, step = train.train_simple_model(training_data_x, training_data_y, checkpoint, step)
 
 while(play_game):
     if number_of_turns == 0:
@@ -161,3 +162,9 @@ while(play_game):
         player_goes_first = not player_goes_first
         play_again = input('Any key to continue..')
         set_defaults()
+
+#using tensorboard
+#E:
+#tensorboard --logdir=Logs
+
+#http://localhost:6006/
