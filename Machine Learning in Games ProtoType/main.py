@@ -1,6 +1,7 @@
 #Main.py Starting File
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+import shutil
 
 from random import randint
 import numpy as np
@@ -33,6 +34,10 @@ training_data_y = np.empty((0,4))
 starting_stats = []
 
 step = 0
+
+logs_directory = "E:/Logs"
+shutil.rmtree(logs_directory)
+os.makedirs(logs_directory)
 
 def set_defaults():
 
