@@ -117,15 +117,13 @@ while(play_game):
         os.system('cls')
 
         if is_valid and players_action > 0 and players_action <= 5:
-
-            player_training_data.record(players_action, ai, user) #Stores as AI would see ((ai, user) NOT (user, ai))
-            game_actions.display_player_chosen_action(user, players_action)
-
             if players_action == 5:
                 play_game = False
             else:
                 game_actions.perfrom(user, ai, players_action)
-
+                player_training_data.record(players_action, ai, user) #Stores as AI would see ((ai, user) NOT (user, ai))
+                game_actions.display_player_chosen_action(user, players_action)
+                
             player_turn = False
 
         else:
