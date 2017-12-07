@@ -26,7 +26,7 @@ def train_simple_model(training_data_X, training_data_Y, restore_checkpoint_path
     with tf.name_scope('cross_entropy'):
         cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=prediction, labels=Y))
 
-    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
     with tf.name_scope('accuracy'):
         with tf.name_scope('correct_prediction'):
@@ -39,13 +39,16 @@ def train_simple_model(training_data_X, training_data_Y, restore_checkpoint_path
             weights = tf.get_variable('fully_connected/weights')#, [10,6]
         with tf.name_scope('biases'):
             biases = tf.get_variable('fully_connected/biases')
-        #activations = tf.get_variable('fully_connected')
+
+        #with tf.name_scope('activations'):
+        #    activations = tf.get_variable('activations', [6])
 
     # create a summary for our cost and accuracy
     tf.summary.scalar("Cross_entropy", cost)
     tf.summary.scalar("Accuracy", accuracy)
     tf.summary.histogram("layer_1_weights", weights)
     tf.summary.histogram("layer_1_biases", biases)
+    #tf.summary.histogram("layer_1_activations", activations)
 
     merged = tf.summary.merge_all()
 
@@ -78,7 +81,13 @@ def train_simple_model(training_data_X, training_data_Y, restore_checkpoint_path
             global_step += 1
             writer.add_summary(summary, global_step)
 
-               
+            #predict/layer_1/fully_connected/Sigmoid
+            #for i in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
+            #    print(i.name)   # i.name if you want just a name
+            #    print(i)
+
+            #vars = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1'))  
+            #print(vars)
 
             print('Epoch {} - Loss {} - Accuracy {}'.format(global_step, loss, current_accuracy))
             if current_accuracy == 1.0:
@@ -97,3 +106,10 @@ def train_simple_model(training_data_X, training_data_Y, restore_checkpoint_path
 #print(weight)
 #bias=sess.run(tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, 'layer_1/fully_connected/bias'))
 #print(bias)
+
+#Get all scope variables
+#for i in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1'):
+#                print(i.name)   # i.name if you want just a name
+#                print(i)
+
+#ValueError: initial_value must have a shape specified: Tensor("predict/layer_1/fully_connected/Sigmoid:0", shape=(?, 6), dtype=float32)
