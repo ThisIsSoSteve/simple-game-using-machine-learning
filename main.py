@@ -1,15 +1,16 @@
-#Main.py Starting File
+'''
+Main.py Starting File
+'''
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import shutil
-
-from random import randint
 import numpy as np
 from AI import train
 from AI import use
 from player import Player
 from actions import Actions
 from data import Data
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 #Initialize game variables
 play_game = True

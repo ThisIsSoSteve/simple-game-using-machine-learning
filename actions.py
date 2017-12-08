@@ -1,3 +1,7 @@
+'''
+Used to display and perfrom actions for the user and their opponent
+'''
+
 class Actions:
 
     def __init__(self):
@@ -6,20 +10,16 @@ class Actions:
         self.action_type_attack = 1
         self.action_type_affect = 2
 
-        #ToDo: Change list construction
-        self.player_action_1 = ('Attack', self.action_type_attack)
-        self.player_action_2 = ('Increase my defence', self.action_type_affect)
-        self.player_action_3 = ('Decrease their attack', self.action_type_affect)
-        self.player_action_4 = ('Decrease their defence', self.action_type_affect)
+        #actions lists
+        self.player_actions = (('Attack', self.action_type_attack),
+                               ('Increase my defence', self.action_type_affect),
+                               ('Decrease their attack', self.action_type_affect),
+                               ('Decrease their defence', self.action_type_affect))
 
-        self.ai_action_1 = ('Attack', self.action_type_attack)
-        self.ai_action_2 = ('Increase their defence', self.action_type_affect)
-        self.ai_action_3 = ('Decrease your attack', self.action_type_affect)
-        self.ai_action_4 = ('Decrease your defence', self.action_type_affect)
-
-        #actions list
-        self.player_actions = (self.player_action_1, self.player_action_2, self.player_action_3, self.player_action_4)
-        self.ai_actions = (self.ai_action_1, self.ai_action_2, self.ai_action_3, self.ai_action_4)
+        self.ai_actions = (('Attack', self.action_type_attack),
+                           ('Increase their defence', self.action_type_affect),
+                           ('Decrease your attack', self.action_type_affect),
+                           ('Decrease your defence', self.action_type_affect))
 
     def get_value_for_action(self, player, action_type):
         value = 0
