@@ -10,165 +10,148 @@ from player import Player
 from actions import Actions
 from data import Data
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+class Main:
+    def __init__(self):
+        self.play_game = True
+        self.player_turn = True
+        self.player_goes_first = True
+        self.number_of_turns = 0
 
-#Initialize game variables
-play_game = True
-player_turn = True
-player_goes_first = True
-number_of_turns = 0
+        self.user = Player('user')
+        self.opponent = Player('opponent')
+        self.game_actions = Actions()
+        #training data
+        self.player_training_data = Data(10)
+        self.opponent_training_data = Data(10)
 
-user = Player('user')
-ai = Player('opponent')
-game_actions = Actions()
+        #checkpoint to use
+        self.checkpoint = ''
 
-#training data 
-player_training_data = Data(10)
-ai_training_data = Data(10)
+        self.training_data_x = np.empty((0, 10))
+        self.training_data_y = np.empty((0, 4))
 
-#checkpoint to use
-checkpoint = ''
+        self.starting_stats = []
 
-training_data_x = np.empty((0,10))
-training_data_y = np.empty((0,4))
+        self.step = 0
 
-starting_stats = []
+        self.logs_directory = "E:/Logs"
+        shutil.rmtree(self.logs_directory)
+        os.makedirs(self.logs_directory)
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-step = 0
+    def set_defaults(self):
 
-logs_directory = "E:/Logs"
-shutil.rmtree(logs_directory)
-os.makedirs(logs_directory)
+        self.player_turn = self.player_goes_first
 
-def set_defaults():
+        self.number_of_turns = 0
 
-    global player_goes_first
+        self.user = Player('user')
+        self.opponent = Player('opponent')
 
-    global player_turn
-    player_turn = player_goes_first
+        #reset training data
+        self.player_training_data = Data(10)
+        self.opponent_training_data = Data(10)
 
-    global number_of_turns
-    number_of_turns = 0
-
-    global user
-    user = Player('user')
-
-    global ai
-    ai = Player('opponent')
-
-    #reset training data
-    global player_training_data
-
-    global ai_training_data
-
-    player_training_data = Data(10)
-    ai_training_data = Data(10)
-
-    os.system('cls')
-
-def intTryParse(value):
-    try:
-        return int(value), True
-    except ValueError:
-        return value, False
-
-def train_ai(did_player_win, players_turn_first):
-
-    global training_data_x
-    global training_data_y
-
-    global ai_training_data
-    global player_training_data
-    
-    if did_player_win:
-        if players_turn_first:
-            ai_training_data.data = np.insert(ai_training_data.data, 0, starting_stats, axis=0)
-           
-        training_data_x = np.concatenate((training_data_x, ai_training_data.data), axis=0)
-        training_data_y = np.concatenate((training_data_y, player_training_data.data[:, :4]), axis=0)
-
-    else:
-
-        if players_turn_first == False:
-            player_training_data.data = np.insert(player_training_data.data, 0, starting_stats, axis=0)
-
-        training_data_x = np.concatenate((training_data_x, player_training_data.data), axis=0)
-        training_data_y = np.concatenate((training_data_y, ai_training_data.data[:, :4]), axis=0)
-        
-    #print(training_data_x)
-    #print(training_data_y)
-
-    global checkpoint
-    global step
-
-
-    checkpoint, step = train.train_simple_model(training_data_x, training_data_y, checkpoint, step)
-
-while(play_game):
-    if number_of_turns == 0:
-        starting_stats = np.array([0,0,0,0,user.attack/user.max_attack, user.defence/user.max_defence, user.health/user.max_health, ai.attack/ai.max_attack, ai.defence/ai.max_defence, ai.health/ai.max_health])
-
-    if player_turn:
-        user.print_health()
-        game_actions.display_player_actions(user)
-        print('5. Exit')
-
-        user_input = input('Action (1-5)')
-        players_action, is_valid = intTryParse(user_input)
         os.system('cls')
 
-        if is_valid and players_action > 0 and players_action <= 5:
-            if players_action == 5:
-                play_game = False
-            else:
-                game_actions.perfrom(user, ai, players_action)
-                player_training_data.record(players_action, ai, user) #Stores as AI would see ((ai, user) NOT (user, ai))
-                game_actions.display_player_chosen_action(user, players_action)
+    #ToDo: Move to common
+    def intTryParse(self, value):
+        try:
+            return int(value), True
+        except ValueError:
+            return value, False
+
+    def train_ai(self, did_player_win, players_turn_first):
+        if did_player_win:
+            if players_turn_first:
+                self.opponent_training_data.data = np.insert(self.opponent_training_data.data, 0, self.starting_stats, axis=0)
                 
-            player_turn = False
-
+            self.training_data_x = np.concatenate((self.training_data_x, self.opponent_training_data.data), axis=0)
+            self.training_data_y = np.concatenate((self.training_data_y, self.player_training_data.data[:, :4]), axis=0)
         else:
-            print('Please enter a valid option from 1-5')
-    else: #AI's turn
+            if players_turn_first is False:
+                self.player_training_data.data = np.insert(self.player_training_data.data, 0, self.starting_stats, axis=0)
 
-        data = starting_stats
-        if len(player_training_data.data) != 0:
-            data = player_training_data.data[-1] 
+            self.training_data_x = np.concatenate((self.training_data_x, self.player_training_data.data), axis=0)
+            self.training_data_y = np.concatenate((self.training_data_y, self.opponent_training_data.data[:, :4]), axis=0)
 
-        data = np.reshape(data, (-1, 10))
-        
-        ais_action = use.use_simple_model(checkpoint, data) + 1
-        print('ai choice number: {}'.format(ais_action))
+        self.checkpoint, self.step = train.train_simple_model(self.training_data_x, self.training_data_y, self.checkpoint, self.step)
 
-        ai_training_data.record(ais_action, user, ai)
+    def run_game(self):
+        while(self.play_game):
+            if self.number_of_turns == 0:
+                #ToDo Move this out
+                self.starting_stats = np.array([0, 0, 0, 0,
+                                           self.user.attack / self.user.max_attack,
+                                           self.user.defence / self.user.max_defence,
+                                           self.user.health / self.user.max_health,
+                                           self.opponent.attack / self.opponent.max_attack,
+                                           self.opponent.defence / self.opponent.max_defence,
+                                           self.opponent.health / self.opponent.max_health])
 
-        print('')
-        ai.print_health()
-        game_actions.display_ai_chosen_action(ai, ais_action)
-        game_actions.perfrom(ai, user, ais_action)
+            if self.player_turn:
+                self.user.print_health()
+                self.game_actions.display_player_actions(self.user)
+                print('5. Exit')
 
-        player_turn = True
+                user_input = input('Action (1-5)')
+                players_action, is_valid = self.intTryParse(user_input)
+                os.system('cls')
 
-    #if player_turn: #if player chooses an invalid action don't +1 to number_of_turns
-    number_of_turns += 1
+                if is_valid and players_action > 0 and players_action <= 5:
+                    if players_action == 5:
+                        self.play_game = False
+                    else:
+                        self.game_actions.perfrom(self.user, self.opponent, players_action)
+                        self.player_training_data.record(players_action, self.opponent, self.user) #Stores as AI would see ((ai, user) NOT (user, ai))
+                        self.game_actions.display_player_chosen_action(self.user, players_action)
+                        
+                    self.player_turn = False
 
-    if user.alive == False or ai.alive == False:
+                else:
+                    print('Please enter a valid option from 1-5')
+            else: #AI's turn
 
-        if user.alive == False:
-            os.system('cls')
-            train_ai(False, player_goes_first)
-            print('You lost')
-        else:
-            os.system('cls')
-            train_ai(True, player_goes_first)
-            print('You Won')
+                data = self.starting_stats
+                if len(self.player_training_data.data) != 0:#if not self.player_training_data.data
+                    data = self.player_training_data.data[-1] 
 
-        player_goes_first = not player_goes_first
-        play_again = input('Any key to continue..')
-        set_defaults()
+                data = np.reshape(data, (-1, 10))
+                
+                ais_action = use.use_simple_model(self.checkpoint, data) + 1
+                print('opponent\'s choice number: {}'.format(ais_action))
+
+                self.opponent_training_data.record(ais_action, self.user, self.opponent)
+
+                print('')
+                self.opponent.print_health()
+                self.game_actions.display_ai_chosen_action(self.opponent, ais_action)
+                self.game_actions.perfrom(self.opponent, self.user, ais_action)
+
+                self.player_turn = True
+
+            #if player_turn: #if player chooses an invalid action don't +1 to number_of_turns
+            self.number_of_turns += 1
+
+            if self.user.alive is False or self.opponent.alive is False:
+
+                if self.user.alive is False:
+                    os.system('cls')
+                    self.train_ai(False, self.player_goes_first)
+                    print('You lost')
+                else:
+                    os.system('cls')
+                    self.train_ai(True, self.player_goes_first)
+                    print('You Won')
+
+                self.player_goes_first = not self.player_goes_first
+                input('Any key to continue..')
+                self.set_defaults()
 
 #using tensorboard
 #E:
 #tensorboard --logdir=Logs
 
 #http://localhost:6006/
+
+Main().run_game()
