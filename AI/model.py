@@ -1,38 +1,20 @@
 #Model.py
 import tensorflow as tf
-import numpy as np
 
+# with tf.name_scope('input'):
+#     X = tf.placeholder(tf.float32, [None, 10])
+#     Y = tf.placeholder(tf.float32, [None, 4])#[action1, action2, action3, action4][1,0,0,0]
 
-
-#X = tf.placeholder(tf.float32, [None, 3])
-#Y = tf.placeholder(tf.float32, [None, 4])#[action1, action2, action3, action4][1,0,0,0]
-
-def simple_model(X):
+def simple_model(x):
 
     with tf.variable_scope('layer_1') as scope:
+        layer1_weights = tf.Variable(tf.random_uniform(shape = [10, 6], minval = 0.001, maxval = 0.01), name = "weights")
+        layer1_biases = tf.Variable(tf.constant(0.01, shape = [6]), name = "biases")
+        layer1 = tf.nn.sigmoid(tf.matmul(x, layer1_weights) + layer1_biases)
 
-        
-        layer1 = tf.contrib.layers.fully_connected(
-            inputs = X,
-            num_outputs = 6,
-            activation_fn = tf.nn.sigmoid,
-            weights_initializer = tf.random_uniform_initializer(minval=0.001, maxval= 0.01),
-            scope = 'fully_connected'
-            
-            #constant_initializer(0.01), #tf.contrib.layers.variance_scaling_initializer(factor=400, uniform=True),#tf.contrib.layers.xavier_initializer(),
-            #biases_initializer = tf.constant_initializer(0.01) #tf.zeros_initializer()
-            )
-        
-        
-        #tf.summary.histogram("hidden_layer_activations", layer1)
-    #tf.summary.image('hidden_layer', layer1, max_outputs=1, collections=None)
-
-    with tf.variable_scope('output_layer') as scope:
-        output = tf.contrib.layers.fully_connected(
-            inputs = layer1,
-            num_outputs = 4,
-            activation_fn = None,
-            weights_initializer = tf.random_uniform_initializer(minval=0.001, maxval= 0.01), 
-            )
+    with tf.variable_scope('layer_output') as scope:
+        output_weights = tf.Variable(tf.random_uniform(shape = [6, 4], minval = 0.001, maxval = 0.01), name = "weights")
+        output_biases = tf.Variable(tf.constant(0.0, shape = [4]), name = "biases")
+        output = tf.matmul(layer1, output_weights) + output_biases
 
     return output

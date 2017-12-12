@@ -34,11 +34,11 @@ def train_simple_model(training_data_X, training_data_Y, restore_checkpoint_path
         with tf.name_scope('accuracy'):
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
-    with tf.variable_scope('layer_1', reuse=True):
-        with tf.name_scope('weights'):
-            weights = tf.get_variable('fully_connected/weights')#, [10,6]
-        with tf.name_scope('biases'):
-            biases = tf.get_variable('fully_connected/biases')
+    # with tf.variable_scope('layer_1', reuse=True):
+    #     with tf.name_scope('weights'):
+    #         weights = tf.get_variable('fully_connected/weights')#, [10,6]
+    #     with tf.name_scope('biases'):
+    #         biases = tf.get_variable('fully_connected/biases')
 
         #with tf.name_scope('activations'):
         #    activations = tf.get_variable('activations', [6])
@@ -46,8 +46,8 @@ def train_simple_model(training_data_X, training_data_Y, restore_checkpoint_path
     # create a summary for our cost and accuracy
     tf.summary.scalar("Cross_entropy", cost)
     tf.summary.scalar("Accuracy", accuracy)
-    tf.summary.histogram("layer_1_weights", weights)
-    tf.summary.histogram("layer_1_biases", biases)
+    # tf.summary.histogram("layer_1_weights", weights)
+    # tf.summary.histogram("layer_1_biases", biases)
     #tf.summary.histogram("layer_1_activations", activations)
 
     merged = tf.summary.merge_all()
