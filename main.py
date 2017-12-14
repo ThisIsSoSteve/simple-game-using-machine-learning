@@ -9,6 +9,7 @@ from AI import use
 from player import Player
 from actions import Actions
 from data import Data
+# from train import Train
 
 class Main:
     def __init__(self):
@@ -28,7 +29,7 @@ class Main:
         self.opponent_training_data = Data(self.feature_length, self.label_length)
 
         #checkpoint to use
-        self.checkpoint = ''
+        self.checkpoint = False
 
         self.starting_stats = np.array([0, 0, 0, 0,
                                            self.user.attack / self.user.max_attack,
@@ -47,6 +48,8 @@ class Main:
         shutil.rmtree(self.logs_directory)
         os.makedirs(self.logs_directory)
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+        self.trainer = train.Train(50, 0.01)
 
     def set_defaults(self):
 
@@ -81,7 +84,8 @@ class Main:
         print(self.training_data_x)
         print(self.training_data_y)
 
-        self.checkpoint, self.step = train.train_simple_model(self.training_data_x, self.training_data_y, self.checkpoint, self.step)
+        self.trainer.train_simple_model(self.training_data_x, self.training_data_y, self.checkpoint)
+        self.checkpoint = True
 
     def run_game(self):
         while(self.play_game):
@@ -126,8 +130,11 @@ class Main:
 
                 data = np.reshape(data, (-1, 10))
                 print('opponents\'s view: {}'.format(data))
+                if self.checkpoint:   
+                    opponents_action = use.use_simple_model(self.trainer.checkpoint_file_path, data) + 1
+                else:
+                    opponents_action = use.use_simple_model('', data) + 1
 
-                opponents_action = use.use_simple_model(self.checkpoint, data) + 1
                 print('opponent\'s choice number: {}'.format(opponents_action))
 
                 self.opponent_training_data.record(opponents_action, self.user, self.opponent, False)
