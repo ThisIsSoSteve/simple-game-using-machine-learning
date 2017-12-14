@@ -12,3 +12,18 @@ class Plot:
         plt.ylabel(self.y_label)
         plt.xlabel(self.x_label)
         plt.show()
+
+    def show_sub_plot(self, subplot):
+        plt.figure(1)
+        plt.subplot(211)
+        plt.ylabel(self.y_label)
+        plt.xlabel(self.x_label)
+        plt.plot(self.data)
+        
+        plt.subplot(212)
+        plt.ylabel(subplot.y_label)
+        plt.xlabel(subplot.x_label)
+        plt.plot(subplot.data)
+
+        plt.subplots_adjust(hspace= 0.35)
+        plt.show()

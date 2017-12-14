@@ -94,8 +94,9 @@ class Train:
             #saver.save(sess, '{}/turn_based_ai-{}.ckpt'.format(checkpoint_file_path, current_accuracy))
             saver.save(sess, self.checkpoint_file_path)
 
-        self.cost_plot.show()
-        self.accuracy_plot.show()
+        self.cost_plot.show_sub_plot(self.accuracy_plot)
+        #self.cost_plot.show()
+        #self.accuracy_plot.show()
         print('Completed')
         return self.checkpoint_file_path, self.global_step
 
