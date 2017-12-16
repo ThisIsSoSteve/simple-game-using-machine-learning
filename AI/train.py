@@ -3,6 +3,7 @@ import tensorflow as tf
 import numpy as np
 from AI import model
 from plot import Plot
+import matplotlib.pyplot as plt
 
 class Train:
     def __init__(self, max_epochs, learning_rate):
@@ -81,7 +82,9 @@ class Train:
                 #     print(i.name)   # i.name if you want just a name
                 #     print(i)
 
-                # test = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0')) 
+                #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0')) 
+                #plt.imshow(matrix, cmap='Greys_r', interpolation='none', vmin = [0,0,0], vmax = [255,255,255])
+
                 # test = np.array(test)
                 # print(test)
                 # print(test.shape)
@@ -94,9 +97,11 @@ class Train:
             #saver.save(sess, '{}/turn_based_ai-{}.ckpt'.format(checkpoint_file_path, current_accuracy))
             saver.save(sess, self.checkpoint_file_path)
 
-        self.cost_plot.show_sub_plot(self.accuracy_plot)
-        #self.cost_plot.show()
-        #self.accuracy_plot.show()
+        #self.cost_plot.show_sub_plot(self.accuracy_plot)
+        self.cost_plot.save_sub_plot(self.accuracy_plot,
+         "E:/Charts/{} and {}.png".format(self.cost_plot.y_label, self.accuracy_plot.y_label))
+
+        
         print('Completed')
         return self.checkpoint_file_path, self.global_step
 
