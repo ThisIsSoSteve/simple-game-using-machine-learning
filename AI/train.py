@@ -75,19 +75,11 @@ class Train:
                 self.cost_plot.data.append(loss)
                 self.accuracy_plot.data.append(current_accuracy)
 
-                #writer.add_summary(summary, global_step)
-
-                #predict/layer_1/fully_connected/Sigmoid
                 # for i in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
                 #     print(i.name)   # i.name if you want just a name
                 #     print(i)
 
-                #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0')) 
-                #plt.imshow(matrix, cmap='Greys_r', interpolation='none', vmin = [0,0,0], vmax = [255,255,255])
-
-                # test = np.array(test)
-                # print(test)
-                # print(test.shape)
+               
 
                 print('Epoch {} - Loss {} - Accuracy {}'.format(self.global_step, loss, current_accuracy))
                 if current_accuracy == 1.0:
@@ -97,10 +89,22 @@ class Train:
             #saver.save(sess, '{}/turn_based_ai-{}.ckpt'.format(checkpoint_file_path, current_accuracy))
             saver.save(sess, self.checkpoint_file_path)
 
+            weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
+            #print(weights)
+            
+            plt.close('all')
+            plt.figure()
+            plt.imshow(weights, cmap='Greys_r', interpolation='none')
+            plt.xlabel('Nodes')
+            plt.ylabel('Inputs')
+            plt.show()
+            plt.close()
+
         #self.cost_plot.show_sub_plot(self.accuracy_plot)
         self.cost_plot.save_sub_plot(self.accuracy_plot,
          "E:/Charts/{} and {}.png".format(self.cost_plot.y_label, self.accuracy_plot.y_label))
 
+       
         
         print('Completed')
         return self.checkpoint_file_path, self.global_step

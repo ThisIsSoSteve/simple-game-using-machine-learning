@@ -27,6 +27,7 @@ class Plot:
 
         plt.subplots_adjust(hspace= 0.35)
         plt.show()
+        plt.close()
 
     def save_sub_plot(self, subplot, savefile):
         plt.figure(1, figsize=(8, 6))
@@ -42,3 +43,4 @@ class Plot:
 
         plt.subplots_adjust(hspace= 0.35)
         plt.savefig(savefile, dpi=128)
+        plt.close()
