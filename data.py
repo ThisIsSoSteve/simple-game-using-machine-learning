@@ -46,10 +46,10 @@ class Data:
             opponent.last_action = new_label
 
             #new_feature[0, user.last_action - 1] = 1 #one hot label
-            new_feature[0, 0] = opponent.last_action[0, 0]
-            new_feature[0, 1] = opponent.last_action[0, 1]
-            new_feature[0, 2] = opponent.last_action[0, 2]
-            new_feature[0, 3] = opponent.last_action[0, 3]
+            new_feature[0, 0] = user.last_action[0, 0]
+            new_feature[0, 1] = user.last_action[0, 1]
+            new_feature[0, 2] = user.last_action[0, 2]
+            new_feature[0, 3] = user.last_action[0, 3]
 
             new_feature[0, 4] = user.attack / user.max_attack
             new_feature[0, 5] = user.defence / user.max_defence

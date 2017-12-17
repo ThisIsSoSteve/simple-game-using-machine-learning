@@ -8,12 +8,12 @@ import tensorflow as tf
 def simple_model(x):
 
     with tf.variable_scope('layer_1') as scope:
-        layer1_weights = tf.Variable(tf.random_uniform(shape = [10, 6], minval = 0.001, maxval = 0.01), name = "weights")
-        layer1_biases = tf.Variable(tf.constant(0.01, shape = [6]), name = "biases")
+        layer1_weights = tf.Variable(tf.random_uniform(shape = [10, 2], minval = 0.001, maxval = 0.01), name = "weights")
+        layer1_biases = tf.Variable(tf.constant(0.01, shape = [2]), name = "biases")
         layer1 = tf.nn.sigmoid(tf.matmul(x, layer1_weights) + layer1_biases)
 
     with tf.variable_scope('layer_output') as scope:
-        output_weights = tf.Variable(tf.random_uniform(shape = [6, 4], minval = 0.001, maxval = 0.01), name = "weights")
+        output_weights = tf.Variable(tf.random_uniform(shape = [2, 4], minval = 0.001, maxval = 0.01), name = "weights")
         output_biases = tf.Variable(tf.constant(0.0, shape = [4]), name = "biases")
         output = tf.matmul(layer1, output_weights) + output_biases
 
