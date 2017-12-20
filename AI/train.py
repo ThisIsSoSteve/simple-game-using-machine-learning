@@ -1,9 +1,9 @@
 #Train.py
 import tensorflow as tf
 import numpy as np
-from AI import model
 from plot import Plot
 import matplotlib.pyplot as plt
+from model import Model
 
 class Train:
     def __init__(self, max_epochs, learning_rate):
@@ -21,31 +21,11 @@ class Train:
         current_accuracy = 0.0
 
         tf.reset_default_graph()
-        #with tf.name_scope("train"):
 
+        #As i have to reset the default at the moment i have to declare them here not in the init 
         X = tf.placeholder(tf.float32, [None, 10])
-        Y = tf.placeholder(tf.float32, [None, 4])#[action1, action2, action3, action4][1,0,0,0]
-
-        prediction = model.simple_model(X)
-
-        #cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=Y))
-        with tf.name_scope('cross_entropy'):
-            cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=prediction, labels=Y))
-
-        optimizer = tf.train.AdamOptimizer(learning_rate = self.learning_rate).minimize(cost)
-
-        with tf.name_scope('accuracy'):
-            with tf.name_scope('correct_prediction'):
-                correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1))
-            with tf.name_scope('accuracy'):
-                accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-        # create a summary for our cost and accuracy
-        #tf.summary.scalar("Cross_entropy", cost)
-        #tf.summary.scalar("Accuracy", accuracy)
-
-
-        #merged = tf.summary.merge_all()
+        Y = tf.placeholder(tf.float32, [None, 4])
+        model = Model(X, Y)
 
         saver = tf.train.Saver()#(max_to_keep=10)
         #Start Training
@@ -56,42 +36,33 @@ class Train:
             if restore:
                 saver.restore(sess, self.checkpoint_file_path)
 
-            #create log writer object
-            #writer = tf.summary.FileWriter('E:/Logs/{}'.format(starting_step), graph=tf.get_default_graph())
-
             for _ in range(self.number_of_epochs):
-
                 if online_training:
-                    #print(np.size(training_data_X, 0))
                     for i in range(np.size(training_data_X, 0)):
-                        _, loss = sess.run([optimizer, cost], feed_dict = { X: np.reshape(training_data_X[i], (-1, 10)), Y: np.reshape(training_data_Y[i],(-1, 4))})
+                        _, loss = sess.run(model.optimize, { X: np.reshape(training_data_X[i], (-1, 10)), Y: np.reshape(training_data_Y[i],(-1, 4))})
+                        #_, loss = sess.run([optimizer, cost], feed_dict = { X: np.reshape(training_data_X[i], (-1, 10)), Y: np.reshape(training_data_Y[i],(-1, 4))})
                 else:
-                    _, loss = sess.run([optimizer, cost], feed_dict = { X: training_data_X, Y: training_data_Y })
+                    #_, loss = sess.run([optimizer, cost], feed_dict = { X: training_data_X, Y: training_data_Y })
+                     _, loss = sess.run(model.optimize, { X: training_data_X, Y: training_data_Y })
 
-                #current_accuracy = accuracy.eval(feed_dict={ X: training_data_X, Y: training_data_Y})
-                current_accuracy, loss = sess.run([accuracy, cost], feed_dict={ X: training_data_X, Y: training_data_Y})
+                current_accuracy = sess.run(model.error, { X: training_data_X, Y: training_data_Y })
+
                 self.global_step += 1
 
                 self.cost_plot.data.append(loss)
                 self.accuracy_plot.data.append(current_accuracy)
-
-                # for i in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
-                #     print(i.name)   # i.name if you want just a name
-                #     print(i)
-
-               
 
                 print('Epoch {} - Loss {} - Accuracy {}'.format(self.global_step, loss, current_accuracy))
                 if current_accuracy == 1.0:
                     break
             
             print('Saving...')
-            #saver.save(sess, '{}/turn_based_ai-{}.ckpt'.format(checkpoint_file_path, current_accuracy))
             saver.save(sess, self.checkpoint_file_path)
 
             weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
             #print(weights)
             
+            #Move out into class
             plt.close('all')
             plt.figure()
             plt.imshow(weights, cmap='Greys_r', interpolation='none')
@@ -117,8 +88,11 @@ class Train:
 #print(bias)
 
 #Get all scope variables
+# for i in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES):
+#     print(i.name)   # i.name if you want just a name
+#     print(i)
+
+#Get all in a scope variables
 #for i in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1'):
 #                print(i.name)   # i.name if you want just a name
 #                print(i)
-
-#ValueError: initial_value must have a shape specified: Tensor("predict/layer_1/fully_connected/Sigmoid:0", shape=(?, 6), dtype=float32)
