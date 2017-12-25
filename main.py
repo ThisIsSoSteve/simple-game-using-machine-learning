@@ -53,7 +53,6 @@ class Main:
         #self.trainer = train.Train(50, 0.01)
 
     def set_defaults(self):
-
         self.player_turn = self.player_goes_first
 
         self.number_of_turns = 0
@@ -74,8 +73,7 @@ class Main:
         except ValueError:
             return value, False
 
-    def run_game(self, opponents_action):
-        
+    def run_game(self, opponents_action):        
         if self.player_turn:
             self.user.print_health()
             self.game_actions.display_player_actions(self.user)
@@ -98,11 +96,11 @@ class Main:
             else:
                 print('Please enter a valid option from 1-5')
         else: #AI's turn
-            print('opponent\'s choice number: {}'.format(opponents_action))
+            #print('opponent\'s choice number: {}'.format(opponents_action))
 
             self.opponent_training_data.record(opponents_action, self.user, self.opponent, False)
 
-            print('')
+            #print('')
             self.opponent.print_health()
             self.game_actions.display_ai_chosen_action(self.opponent, opponents_action)
             self.game_actions.perfrom(self.opponent, self.user, opponents_action)
@@ -195,8 +193,8 @@ class Main:
                         cost_plot.data.append(loss)
                         accuracy_plot.data.append(current_accuracy)
 
-                        if current_accuracy == 1.0:    
-                            break
+                        #if current_accuracy == 1.0:    
+                            #break
 
                     print('Saving...')
                     saver.save(sess, checkpoint)
@@ -204,16 +202,15 @@ class Main:
                     print('Epoch {} - Loss {} - Accuracy {}'.format(global_step, loss, current_accuracy))
 
                     weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
-                    #print(weights)
                     
                     #Move out into class
-                    plt.close('all')
-                    plt.figure()
-                    plt.imshow(weights, cmap='Greys_r', interpolation='none')
-                    plt.xlabel('Nodes')
-                    plt.ylabel('Inputs')
-                    plt.show()
-                    plt.close()
+                    # plt.close('all')
+                    # plt.figure()
+                    # plt.imshow(weights, cmap='Greys_r', interpolation='none')
+                    # plt.xlabel('Nodes')
+                    # plt.ylabel('Inputs')
+                    # plt.show()
+                    # plt.close()
 
                     cost_plot.save_sub_plot(accuracy_plot,
                     "C:/python/Charts/{} and {}.png".format(cost_plot.y_label, accuracy_plot.y_label))
