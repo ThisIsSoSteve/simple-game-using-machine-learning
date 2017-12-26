@@ -10,8 +10,8 @@ from actions import Actions
 from data import Data
 from model import Model
 from plot import Plot
-import matplotlib.pyplot as plt
- 
+#import matplotlib.pyplot as plt
+
 class Main:
     def __init__(self):
         self.play_game = True
@@ -33,12 +33,12 @@ class Main:
         self.checkpoint = False
 
         self.starting_stats = np.array([0, 0, 0, 0,
-                                           self.user.attack / self.user.max_attack,
-                                           self.user.defence / self.user.max_defence,
-                                           self.user.health / self.user.max_health,
-                                           self.opponent.attack / self.opponent.max_attack,
-                                           self.opponent.defence / self.opponent.max_defence,
-                                           self.opponent.health / self.opponent.max_health])
+                                        self.user.attack / self.user.max_attack,
+                                        self.user.defence / self.user.max_defence,
+                                        self.user.health / self.user.max_health,
+                                        self.opponent.attack / self.opponent.max_attack,
+                                        self.opponent.defence / self.opponent.max_defence,
+                                        self.opponent.health / self.opponent.max_health])
 
         self.step = 0
 
@@ -67,7 +67,7 @@ class Main:
         os.system('cls')
 
     #ToDo: Move to common
-    def intTryParse(self, value):
+    def int_try_parse(self, value):
         try:
             return int(value), True
         except ValueError:
@@ -80,7 +80,7 @@ class Main:
             print('5. Exit')
 
             user_input = input('Action (1-5)')
-            players_action, is_valid = self.intTryParse(user_input)
+            players_action, is_valid = self.int_try_parse(user_input)
             os.system('cls')
 
             if is_valid and players_action > 0 and players_action <= 5:
@@ -193,15 +193,12 @@ class Main:
                         cost_plot.data.append(loss)
                         accuracy_plot.data.append(current_accuracy)
 
-                        #if current_accuracy == 1.0:    
-                            #break
-
                     print('Saving...')
                     saver.save(sess, checkpoint)
 
                     print('Epoch {} - Loss {} - Accuracy {}'.format(global_step, loss, current_accuracy))
 
-                    weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
+                    #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
                     
                     #Move out into class
                     # plt.close('all')

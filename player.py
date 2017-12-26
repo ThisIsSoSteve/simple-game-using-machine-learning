@@ -26,7 +26,7 @@ class Player:
             self.health += amount
             print('{}\'s health increased by {}'.format(self.name, amount))
         else:
-            print('{}\'s health stayed the same')
+            print('{}\'s health stayed the same'.format(self.name))
 
     def decrease_health(self, amount):
         
@@ -45,25 +45,25 @@ class Player:
             self.defence += amount
             print('{}\'s defence increased by {}'.format(self.name, amount))
         else:
-            print('{}\'s defence stayed the same')
+            print('{}\'s defence stayed the same'.format(self.name))
 
     def decrease_defence(self, amount):
         if self.defence > Player.min_limit:
             self.defence -= amount
             print('{}\'s defence decreased by {}'.format(self.name, amount))
         else:
-            print('{}\'s defence stayed the same')
+            print('{}\'s defence stayed the same'.format(self.name))
 
     def increase_attack(self, amount):
         if self.attack < Player.max_attack:
             self.attack += amount
             print('{}\'s attack increased by {}'.format(self.name, amount))
         else:
-            print('{}\'s attack stayed the same')
+            print('{}\'s attack stayed the same'.format(self.name))
 
     def decrease_attack(self, amount):
         if self.attack > Player.min_limit:
             self.attack -= amount
             print('{}\'s attack decreased by {}'.format(self.name, amount))
         else:
-            print('{}\'s attack stayed the same')
+            print('{}\'s attack stayed the same'.format(self.name))
