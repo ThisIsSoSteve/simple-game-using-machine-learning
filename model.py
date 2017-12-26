@@ -12,14 +12,14 @@ class Model:
 
     @lazy_property
     def prediction(self):
-        feature_size = 10
+        feature_size = 6
         label_size = 4
         layer_1_size = 2
 
         with tf.variable_scope('layer_1') as scope:
-            layer_1_weights = tf.Variable(tf.random_uniform(shape=[feature_size, layer_1_size], minval=0.001, maxval=0.01), name="weights")
+            layer_1_weights = tf.Variable(tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.001, maxval = 0.01), name="weights")
             layer_1_biases = tf.Variable(tf.constant(0.01, shape = [layer_1_size]), name = "biases")
-            layer_1 = tf.nn.sigmoid(tf.matmul(self.feature, layer_1_weights) + layer_1_biases)
+            layer_1 = tf.nn.relu(tf.matmul(self.feature, layer_1_weights) + layer_1_biases)
 
         with tf.variable_scope('layer_output') as scope:
             output_weights = tf.Variable(tf.random_uniform(shape = [layer_1_size, label_size], minval = 0.001, maxval = 0.01), name = "weights")

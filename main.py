@@ -2,7 +2,7 @@
 Main.py Starting File
 '''
 import os
-import shutil
+#import shutil
 import numpy as np
 import tensorflow as tf
 from player import Player
@@ -19,7 +19,7 @@ class Main:
         self.player_goes_first = True
         self.number_of_turns = 0
 
-        self.feature_length = 10
+        self.feature_length = 6
         self.label_length = 4
 
         self.user = Player('user', self.label_length)
@@ -32,8 +32,14 @@ class Main:
         #checkpoint to use
         self.checkpoint = False
 
-        self.starting_stats = np.array([0, 0, 0, 0,
-                                        self.user.attack / self.user.max_attack,
+        # self.starting_stats = np.array([0, 0, 0, 0,
+        #                                 self.user.attack / self.user.max_attack,
+        #                                 self.user.defence / self.user.max_defence,
+        #                                 self.user.health / self.user.max_health,
+        #                                 self.opponent.attack / self.opponent.max_attack,
+        #                                 self.opponent.defence / self.opponent.max_defence,
+        #                                 self.opponent.health / self.opponent.max_health])
+        self.starting_stats = np.array([self.user.attack / self.user.max_attack,
                                         self.user.defence / self.user.max_defence,
                                         self.user.health / self.user.max_health,
                                         self.opponent.attack / self.opponent.max_attack,
@@ -45,9 +51,9 @@ class Main:
         self.training_data_x = np.empty((0, self.feature_length))
         self.training_data_y = np.empty((0, self.label_length))
 
-        self.logs_directory = "C:/python/Logs"
-        shutil.rmtree(self.logs_directory)
-        os.makedirs(self.logs_directory)
+        # self.logs_directory = "C:/python/Logs"
+        # shutil.rmtree(self.logs_directory)
+        # os.makedirs(self.logs_directory)
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
         #self.trainer = train.Train(50, 0.01)
@@ -137,19 +143,25 @@ class Main:
     def get_data_for_prediction(self):
         data = self.starting_stats
         if len(self.player_training_data.feature) != 0:#if not self.player_training_data.data
-            data = np.array([self.user.last_action[0, 0],
-                                self.user.last_action[0, 1],
-                                self.user.last_action[0, 2],
-                                self.user.last_action[0, 3],
-                                self.user.attack / self.user.max_attack,
-                                self.user.defence / self.user.max_defence,
-                                self.user.health / self.user.max_health,
-                                self.opponent.attack / self.opponent.max_attack,
-                                self.opponent.defence / self.opponent.max_defence,
-                                self.opponent.health / self.opponent.max_health
-                ])
-
-        return np.reshape(data, (-1, 10))
+            # data = np.array([self.user.last_action[0, 0],
+            #                     self.user.last_action[0, 1],
+            #                     self.user.last_action[0, 2],
+            #                     self.user.last_action[0, 3],
+            #                     self.user.attack / self.user.max_attack,
+            #                     self.user.defence / self.user.max_defence,
+            #                     self.user.health / self.user.max_health,
+            #                     self.opponent.attack / self.opponent.max_attack,
+            #                     self.opponent.defence / self.opponent.max_defence,
+            #                     self.opponent.health / self.opponent.max_health
+            #     ])
+            data = np.array([self.user.attack / self.user.max_attack,
+                            self.user.defence / self.user.max_defence,
+                            self.user.health / self.user.max_health,
+                            self.opponent.attack / self.opponent.max_attack,
+                            self.opponent.defence / self.opponent.max_defence,
+                            self.opponent.health / self.opponent.max_health
+                            ])
+        return np.reshape(data, (-1, self.feature_length))
 
     def start(self, restore):
         global_step = 0
@@ -157,7 +169,7 @@ class Main:
         accuracy_plot = Plot([], 'Step', 'Accuracy')
         checkpoint = 'C:/python/Checkpoints/turn_based_ai.ckpt'
         #Todo: Move to init
-        X = tf.placeholder(tf.float32, [None, 10])
+        X = tf.placeholder(tf.float32, [None, self.feature_length])
         Y = tf.placeholder(tf.float32, [None, 4])
         model = Model(X, Y)
         saver = tf.train.Saver()
@@ -185,7 +197,7 @@ class Main:
                 if train_network:
                     for _ in range(50):
                         for i in range(np.size(self.training_data_x, 0)):
-                            _, loss = sess.run(model.optimize, { X: np.reshape(self.training_data_x[i], (-1, 10)), Y: np.reshape(self.training_data_y[i],(-1, 4))})
+                            _, loss = sess.run(model.optimize, { X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), Y: np.reshape(self.training_data_y[i],(-1, 4))})
                         #_, loss = sess.run(model.optimize, { X: self.training_data_x, Y: self.training_data_y })
                         global_step += 1
 
