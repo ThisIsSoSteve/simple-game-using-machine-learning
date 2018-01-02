@@ -7,7 +7,7 @@ class Player:
     max_defence = 5
     min_limit = 1
 
-    def __init__(self, name, label_length):
+    def __init__(self, name): #label_length
         #display name
         self.name = name
         self.alive = True
@@ -16,7 +16,7 @@ class Player:
         self.defence = 2
         self.health = Player.max_health
         self.affect = 1
-        self.last_action = np.zeros((1, label_length))
+        #self.last_action = np.zeros((1, label_length))
 
     def print_health(self):
         print('{}\'s Health: {}/{}'.format(self.name, self.health, Player.max_health))

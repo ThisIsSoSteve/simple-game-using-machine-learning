@@ -22,7 +22,7 @@ class Data:
 
         if is_user:
             new_label[0, action - 1] = 1
-            user.last_action = new_label
+            #user.last_action = new_label
 
             #new_feature[0, opponent.last_action - 1] = 1 #one hot label
             # new_feature[0, 0] = opponent.last_action[0, 0]
@@ -49,7 +49,7 @@ class Data:
             self.label = np.append(self.label, new_label, axis=0)
         else:
             new_label[0, action - 1] = 1
-            opponent.last_action = new_label
+            #opponent.last_action = new_label
 
             #new_feature[0, user.last_action - 1] = 1 #one hot label
             # new_feature[0, 0] = user.last_action[0, 0]

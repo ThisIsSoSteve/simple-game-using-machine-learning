@@ -5,29 +5,30 @@ import os
 #import shutil
 import numpy as np
 import tensorflow as tf
-from player import Player
-from actions import Actions
-from data import Data
+#from player import Player
+#from actions import Actions
+#from data import Data
 from model import Model
 from plot import Plot
+from game import Game
 #import matplotlib.pyplot as plt
 
 class Main:
     def __init__(self):
         self.play_game = True
-        self.player_turn = True
+        #self.players_turn = True
         self.player_goes_first = True
         self.number_of_turns = 0
 
         self.feature_length = 6
         self.label_length = 4
 
-        self.user = Player('user', self.label_length)
-        self.opponent = Player('opponent', self.label_length)
-        self.game_actions = Actions()
+        #self.user = Player('user', self.label_length)
+        #self.opponent = Player('opponent', self.label_length)
+        #self.game_actions = Actions()
         #training data
-        self.player_training_data = Data(self.feature_length, self.label_length)
-        self.opponent_training_data = Data(self.feature_length, self.label_length)
+        #self.player_training_data = Data(self.feature_length, self.label_length)
+        #self.opponent_training_data = Data(self.feature_length, self.label_length)
 
         #checkpoint to use
         self.checkpoint = False
@@ -39,12 +40,12 @@ class Main:
         #                                 self.opponent.attack / self.opponent.max_attack,
         #                                 self.opponent.defence / self.opponent.max_defence,
         #                                 self.opponent.health / self.opponent.max_health])
-        self.starting_stats = np.array([self.user.attack / self.user.max_attack,
-                                        self.user.defence / self.user.max_defence,
-                                        self.user.health / self.user.max_health,
-                                        self.opponent.attack / self.opponent.max_attack,
-                                        self.opponent.defence / self.opponent.max_defence,
-                                        self.opponent.health / self.opponent.max_health])
+        # self.starting_stats = np.array([self.user.attack / self.user.max_attack,
+        #                                 self.user.defence / self.user.max_defence,
+        #                                 self.user.health / self.user.max_health,
+        #                                 self.opponent.attack / self.opponent.max_attack,
+        #                                 self.opponent.defence / self.opponent.max_defence,
+        #                                 self.opponent.health / self.opponent.max_health])
 
         self.step = 0
 
@@ -58,79 +59,79 @@ class Main:
 
         #self.trainer = train.Train(50, 0.01)
 
-    def set_defaults(self):
-        self.player_turn = self.player_goes_first
+    # def set_defaults(self):
+    #     self.player_turn = self.player_goes_first
 
-        self.number_of_turns = 0
+    #     self.number_of_turns = 0
 
-        self.user = Player('user', self.label_length)
-        self.opponent = Player('opponent', self.label_length)
+    #     self.user = Player('user', self.label_length)
+    #     self.opponent = Player('opponent', self.label_length)
 
-        #reset training data
-        self.player_training_data = Data(self.feature_length, self.label_length)
-        self.opponent_training_data = Data(self.feature_length, self.label_length)
+    #     #reset training data
+    #     self.player_training_data = Data(self.feature_length, self.label_length)
+    #     self.opponent_training_data = Data(self.feature_length, self.label_length)
 
-        os.system('cls')
+    #     os.system('cls')
 
     #ToDo: Move to common
-    def int_try_parse(self, value):
-        try:
-            return int(value), True
-        except ValueError:
-            return value, False
+    # def int_try_parse(self, value):
+    #     try:
+    #         return int(value), True
+    #     except ValueError:
+    #         return value, False
 
-    def run_game(self, opponents_action):        
-        if self.player_turn:
-            self.user.print_health()
-            self.game_actions.display_player_actions(self.user)
-            print('5. Exit')
+    # def run_game(self, opponents_action):        
+    #     if self.player_turn:
+    #         self.user.print_health()
+    #         self.game_actions.display_player_actions(self.user)
+    #         print('5. Exit')
 
-            user_input = input('Action (1-5)')
-            players_action, is_valid = self.int_try_parse(user_input)
-            os.system('cls')
+    #         user_input = input('Action (1-5)')
+    #         players_action, is_valid = self.int_try_parse(user_input)
+    #         os.system('cls')
 
-            if is_valid and players_action > 0 and players_action <= 5:
-                if players_action == 5:
-                    self.play_game = False
-                else:
-                    self.player_training_data.record(players_action, self.user, self.opponent, True)
-                    self.game_actions.perfrom(self.user, self.opponent, players_action)
-                    self.game_actions.display_player_chosen_action(self.user, players_action)
+    #         if is_valid and players_action > 0 and players_action <= 5:
+    #             if players_action == 5:
+    #                 self.play_game = False
+    #             else:
+    #                 self.player_training_data.record(players_action, self.user, self.opponent, True)
+    #                 self.game_actions.perfrom(self.user, self.opponent, players_action)
+    #                 self.game_actions.display_player_chosen_action(self.user, players_action)
                     
-                self.player_turn = False
+    #             self.player_turn = False
 
-            else:
-                print('Please enter a valid option from 1-5')
-        else: #AI's turn
-            #print('opponent\'s choice number: {}'.format(opponents_action))
+    #         else:
+    #             print('Please enter a valid option from 1-5')
+    #     else: #AI's turn
+    #         #print('opponent\'s choice number: {}'.format(opponents_action))
 
-            self.opponent_training_data.record(opponents_action, self.user, self.opponent, False)
+    #         self.opponent_training_data.record(opponents_action, self.user, self.opponent, False)
 
-            #print('')
-            self.opponent.print_health()
-            self.game_actions.display_ai_chosen_action(self.opponent, opponents_action)
-            self.game_actions.perfrom(self.opponent, self.user, opponents_action)
+    #         #print('')
+    #         self.opponent.print_health()
+    #         self.game_actions.display_ai_chosen_action(self.opponent, opponents_action)
+    #         self.game_actions.perfrom(self.opponent, self.user, opponents_action)
 
-            self.player_turn = True
+    #         self.player_turn = True
 
-        #if player_turn: #if player chooses an invalid action don't +1 to number_of_turns
-        self.number_of_turns += 1
+    #     #if player_turn: #if player chooses an invalid action don't +1 to number_of_turns
+    #     self.number_of_turns += 1
 
-        if self.user.alive is False or self.opponent.alive is False:
-            os.system('cls')
-            self.add_training_data(self.user.alive)
+    #     if self.user.alive is False or self.opponent.alive is False:
+    #         os.system('cls')
+    #         self.add_training_data(self.user.alive)
 
-            if self.user.alive is False:
-                print('You lost')
-            else:
-                print('You Won')
+    #         if self.user.alive is False:
+    #             print('You lost')
+    #         else:
+    #             print('You Won')
 
-            self.player_goes_first = not self.player_goes_first
-            input('Press any key to continue..')
-            self.set_defaults()
-            return True
+    #         self.player_goes_first = not self.player_goes_first
+    #         input('Press any key to continue..')
+    #         self.set_defaults()
+    #         return True
         
-        return False
+    #     return False
 
     def add_training_data(self, did_player_win):
         if did_player_win:
@@ -170,7 +171,7 @@ class Main:
         checkpoint = 'C:/python/Checkpoints/turn_based_ai.ckpt'
         #Todo: Move to init
         X = tf.placeholder(tf.float32, [None, self.feature_length])
-        Y = tf.placeholder(tf.float32, [None, 4])
+        Y = tf.placeholder(tf.float32, [None, self.label_length])
         model = Model(X, Y)
         saver = tf.train.Saver()
         global_step = 0
@@ -182,47 +183,53 @@ class Main:
                 saver.restore(sess, checkpoint)
 
             while(self.play_game):
-                predicted_action = np.zeros((1, 4))
-                #Use 
-                if self.player_turn == False:
-                    data = self.get_data_for_prediction()
-                    #print('opponents\'s view: {}'.format(data))
-                    predicted_actions = sess.run(model.prediction, { X: data })[0]
-                    predicted_actions = sess.run(tf.nn.sigmoid(predicted_actions))
-                    predicted_action = np.argmax(predicted_actions) + 1
+                game = Game(self.player_goes_first, self.feature_length, self.label_length)
+                self.player_goes_first = not self.player_goes_first
+                game_over = True
+                while(not game_over):
+                    predicted_action = np.zeros((1, 4))
+                    #Use 
+                    if self.players_turn == False:
+                        data = self.get_data_for_prediction()
+                        #print('opponents\'s view: {}'.format(data))
+                        predicted_actions = sess.run(model.prediction, { X: data })[0]
+                        predicted_actions = sess.run(tf.nn.sigmoid(predicted_actions))
+                        predicted_action = np.argmax(predicted_actions) + 1
 
-                #Play Game
-                train_network = self.run_game(predicted_action)
-                #Train
-                if train_network:
-                    for _ in range(50):
-                        for i in range(np.size(self.training_data_x, 0)):
-                            _, loss = sess.run(model.optimize, { X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), Y: np.reshape(self.training_data_y[i],(-1, 4))})
-                        #_, loss = sess.run(model.optimize, { X: self.training_data_x, Y: self.training_data_y })
-                        global_step += 1
+                    #Play Game
+                    game_over, self.players_turn, features, labels = game.run(predicted_action)
+                    if game_over:
+                        #record data
+                    #Train
+                #game over 
+                for _ in range(50):
+                    for i in range(np.size(self.training_data_x, 0)):
+                        _, loss = sess.run(model.optimize, { X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), Y: np.reshape(self.training_data_y[i],(-1, 4))})
+                    #_, loss = sess.run(model.optimize, { X: self.training_data_x, Y: self.training_data_y })
+                    global_step += 1
 
-                        current_accuracy = sess.run(model.error, { X: self.training_data_x, Y: self.training_data_y })
-                        cost_plot.data.append(loss)
-                        accuracy_plot.data.append(current_accuracy)
+                    current_accuracy = sess.run(model.error, { X: self.training_data_x, Y: self.training_data_y })
+                    cost_plot.data.append(loss)
+                    accuracy_plot.data.append(current_accuracy)
 
-                    print('Saving...')
-                    saver.save(sess, checkpoint)
+                print('Saving...')
+                saver.save(sess, checkpoint)
 
-                    print('Epoch {} - Loss {} - Accuracy {}'.format(global_step, loss, current_accuracy))
+                print('Epoch {} - Loss {} - Accuracy {}'.format(global_step, loss, current_accuracy))
 
-                    #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
-                    
-                    #Move out into class
-                    # plt.close('all')
-                    # plt.figure()
-                    # plt.imshow(weights, cmap='Greys_r', interpolation='none')
-                    # plt.xlabel('Nodes')
-                    # plt.ylabel('Inputs')
-                    # plt.show()
-                    # plt.close()
+                #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
+                
+                #Move out into class
+                # plt.close('all')
+                # plt.figure()
+                # plt.imshow(weights, cmap='Greys_r', interpolation='none')
+                # plt.xlabel('Nodes')
+                # plt.ylabel('Inputs')
+                # plt.show()
+                # plt.close()
 
-                    cost_plot.save_sub_plot(accuracy_plot,
-                    "C:/python/Charts/{} and {}.png".format(cost_plot.y_label, accuracy_plot.y_label))
+                cost_plot.save_sub_plot(accuracy_plot,
+                "C:/python/Charts/{} and {}.png".format(cost_plot.y_label, accuracy_plot.y_label))
 #using tensorboard
 #E:
 #tensorboard --logdir=Logs
