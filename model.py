@@ -1,6 +1,9 @@
 import tensorflow as tf
 from lazy_property import lazy_property
 
+'''
+using structure from https://danijar.com/structuring-your-tensorflow-models/
+'''
 class Model:
 
     def __init__(self, feature, label):

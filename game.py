@@ -7,6 +7,7 @@ from data import Data
 class Game:
     def __init__(self, players_turn, feature_length, label_length):
         self.players_turn = players_turn
+        self.game_over = False
         self.user = Player('user')
         self.opponent = Player('opponent')
 
@@ -33,13 +34,13 @@ class Game:
 
             if is_valid and players_action > 0 and players_action <= 5:
                 if players_action == 5:
-                    self.play_game = False
+                    self.game_over = True
                 else:
                     self.player_training_data.record(players_action, self.user, self.opponent, True)
                     self.game_actions.perfrom(self.user, self.opponent, players_action)
                     self.game_actions.display_player_chosen_action(self.user, players_action)
                     
-                self.player_turn = False
+                self.players_turn = False
 
             else:
                 print('Please enter a valid option from 1-5')
@@ -48,30 +49,20 @@ class Game:
 
             self.opponent_training_data.record(opponents_action, self.user, self.opponent, False)
 
-            #print('')
             self.opponent.print_health()
             self.game_actions.display_ai_chosen_action(self.opponent, opponents_action)
             self.game_actions.perfrom(self.opponent, self.user, opponents_action)
 
-            self.player_turn = True
-
-        #if player_turn: #if player chooses an invalid action don't +1 to number_of_turns
-        #self.number_of_turns += 1
+            self.players_turn = True
 
         if self.user.alive is False or self.opponent.alive is False:
             os.system('cls')
-            #self.add_training_data(self.user.alive)
 
             if self.user.alive is False:
                 print('You lost')
-                return True, False, self.opponent_training_data.feature, self.opponent_training_data.label
+                return True, self.players_turn, self.user, self.opponent, self.opponent_training_data
             else:
                 print('You Won')
-                return True, False, self.player_training_data.feature, self.player_training_data.label
-
-            #self.player_goes_first = not self.player_goes_first
-            #input('Press any key to continue..')
-            #self.set_defaults()
-            #return True
+                return True, self.players_turn, self.user, self.opponent, self.player_training_data
         
-        return False, self.player_turn, None, None
+        return self.game_over, self.players_turn, self.user, self.opponent, None
