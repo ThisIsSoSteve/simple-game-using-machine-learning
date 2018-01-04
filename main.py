@@ -7,6 +7,7 @@ import tensorflow as tf
 from model import Model
 from plot import Plot
 from game import Game
+
 #import matplotlib.pyplot as plt
 
 class Main:
@@ -81,7 +82,7 @@ class Main:
                         data = self.get_data_for_prediction(user, opponent)
                         #print('opponents\'s view: {}'.format(data))
                         predicted_actions = sess.run(self.model.prediction, { self.X: data })[0]
-                        predicted_actions = sess.run(tf.nn.sigmoid(predicted_actions))
+                        #predicted_actions = sess.run(tf.nn.sigmoid(predicted_actions))
                         predicted_action = np.argmax(predicted_actions) + 1
 
                     #Play Game
@@ -96,8 +97,14 @@ class Main:
                 #Train
                 if train:
                     for _ in range(50):
-                        for i in range(np.size(self.training_data_x, 0)):
-                            _, loss = sess.run(self.model.optimize, { self.X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[i],(-1, 4))})
+                        
+                        training_data_size = np.size(self.training_data_x, 0)
+                        random_range = np.arange(training_data_size)
+                        np.random.shuffle(random_range)
+
+                        for i in range(training_data_size):
+                            random_index = random_range[i]
+                            _, loss = sess.run(self.model.optimize, { self.X: np.reshape(self.training_data_x[random_index], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[random_index],(-1, 4))})
                         #_, loss = sess.run(model.optimize, { X: self.training_data_x, Y: self.training_data_y })
                         self.global_step += 1
 

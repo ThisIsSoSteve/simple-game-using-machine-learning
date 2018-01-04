@@ -21,7 +21,8 @@ class Model:
 
         with tf.variable_scope('layer_1') as scope:
             layer_1_weights = tf.Variable(tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.001, maxval = 0.01), name="weights")
-            layer_1_biases = tf.Variable(tf.constant(0.01, shape = [layer_1_size]), name = "biases")
+            #layer_1_weights = tf.Variable(tf.constant(0.0, shape=[feature_size, layer_1_size]), name="weights")
+            layer_1_biases = tf.Variable(tf.constant(0.0, shape = [layer_1_size]), name = "biases")
             layer_1 = tf.nn.relu(tf.matmul(self.feature, layer_1_weights) + layer_1_biases)
 
         with tf.variable_scope('layer_output') as scope:
@@ -34,7 +35,7 @@ class Model:
     @lazy_property
     def optimize(self):
         learning_rate = 0.1
-        cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.prediction, labels=self.label))
+        cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.prediction, labels=self.label))
         #return tf.train.AdamOptimizer(learning_rate = learning_rate).minimize(cost), cost
         return tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(cost), cost
 
@@ -42,3 +43,18 @@ class Model:
     def error(self):
         correct_prediction = tf.equal(tf.argmax(self.prediction, 1), tf.argmax(self.label, 1))
         return tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+'''
+Layer_1 Activations (number of epochs to learn 2 different tactics (50 epoch increments))
+    Sigmoid: 600 epochs (biases = 0.0)
+    Sigmoid: 650 epochs (biases = 0.01)
+    Tanh: 400 epochs (biases = 0.0)
+    Elu: 300 - 400 epcohs (biases = 0.0)
+    Relu: 300 - 400 epochs (biases = 0.0)
+    Relu6 300 - 400 epochs (biases = 0.0)
+
+Shuffling the data helps learning:
+    Relu 200 - 250 epochs (biases = 0.0)
+
+If the weights start at initialised at 0 then the training time doubles
+'''
