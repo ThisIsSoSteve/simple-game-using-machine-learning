@@ -31,6 +31,10 @@ class Main:
     def add_training_data(self, features, labels):
         self.training_data_x = np.concatenate((self.training_data_x, features), axis=0)
         self.training_data_y = np.concatenate((self.training_data_y, labels), axis=0)
+        # print('Features')
+        # print(features)
+        # print('Labels')
+        # print(labels)
 
     def get_data_for_prediction(self, user, opponent):
         data = np.array([1, 0.4, 1, 1, 0.4, 1])#Default starting data (not great)

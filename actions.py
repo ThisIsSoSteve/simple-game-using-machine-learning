@@ -42,19 +42,19 @@ class Actions:
             print('{}. {} ({})'.format(index, action[0], value))
 
     def display_player_chosen_action(self, player, choice):
-        value = self.get_value_for_action(player, self.player_actions[choice-1][1])
+        value = self.get_value_for_action(player, self.player_actions[choice - 1][1])
         print('You chose to {} ({})\n'.format(self.player_actions[choice - 1][0], value))
 
     def display_ai_chosen_action(self, player, choice):
-        value = self.get_value_for_action(player, self.ai_actions[choice-1][1])
+        value = self.get_value_for_action(player, self.ai_actions[choice - 1][1])
         print('AI chose to {} ({})\n'.format(self.ai_actions[choice - 1][0], value))
 
 
     def perfrom(self, player_chooser, player_receiver, choice):
-        if choice == 4:#decrease ai attack
-            player_receiver.decrease_attack(player_chooser.affect)
-        elif choice == 3:#decrease ai defence
+        if choice == 4:#decrease ai defence
             player_receiver.decrease_defence(player_chooser.affect)
+        elif choice == 3:#decrease ai attack
+            player_receiver.decrease_attack(player_chooser.affect)
         elif choice == 2:#increase my defence
             player_chooser.increase_defence(player_chooser.affect)
         elif choice == 1: #damage ai
