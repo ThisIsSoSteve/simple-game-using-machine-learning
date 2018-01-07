@@ -66,3 +66,35 @@ class Game:
                 return True, self.players_turn, self.user, self.opponent, self.player_training_data
         
         return self.game_over, self.players_turn, self.user, self.opponent, None
+
+    def run_ai_game(self, action):
+
+        if self.players_turn: #AI_1
+            self.player_training_data.record(action, self.user, self.opponent, True)
+
+            self.user.print_health()
+            self.game_actions.display_player_chosen_action(self.user, action)
+            self.game_actions.perfrom(self.user, self.opponent, action)
+
+            self.players_turn = False
+           
+        else: #AI_2
+            self.opponent_training_data.record(action, self.user, self.opponent, False)
+
+            self.opponent.print_health()
+            self.game_actions.display_ai_chosen_action(self.opponent, action)
+            self.game_actions.perfrom(self.opponent, self.user, action)
+
+            self.players_turn = True
+
+        if self.user.alive is False or self.opponent.alive is False:
+            #os.system('cls')
+
+            if self.user.alive is False:
+                print('AI_2 Won')
+                return True, self.players_turn, self.user, self.opponent, self.opponent_training_data
+            else:
+                print('AI_1 Won')
+                return True, self.players_turn, self.user, self.opponent, self.player_training_data
+        
+        return self.game_over, self.players_turn, self.user, self.opponent, None

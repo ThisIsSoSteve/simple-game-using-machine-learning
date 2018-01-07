@@ -42,5 +42,5 @@ class Plot:
         plt.plot(subplot.data)
 
         plt.subplots_adjust(hspace= 0.35)
-        plt.savefig(savefile, dpi=64)
+        plt.savefig(savefile, dpi=128)
         plt.close()
