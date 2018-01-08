@@ -38,16 +38,13 @@ class Main:
         # print(labels)
 
     def get_data_for_prediction(self, user, opponent):
-        data = np.array([1, 0.4, 1, 1, 0.4, 1])#Default starting data (not great)
-
-        if user != None:
-            data = np.array([user.attack / user.max_attack,
-                            user.defence / user.max_defence,
-                            user.health / user.max_health,
-                            opponent.attack / opponent.max_attack,
-                            opponent.defence / opponent.max_defence,
-                            opponent.health / opponent.max_health
-                            ])
+        data = np.array([user.attack / user.max_attack,
+                        user.defence / user.max_defence,
+                        user.health / user.max_health,
+                        opponent.attack / opponent.max_attack,
+                        opponent.defence / opponent.max_defence,
+                        opponent.health / opponent.max_health
+                        ])
         return np.reshape(data, (-1, self.feature_length))
 
     def start_user_vs_ai(self, restore):
@@ -62,40 +59,36 @@ class Main:
             if restore:
                 saver.restore(sess, self.checkpoint)
 
-            while(train):
+            while train:
                 game = Game(player_goes_first, self.feature_length, self.label_length)
-                if player_goes_first:
-                    players_turn = True
-                else:
-                    players_turn = False
 
                 player_goes_first = not player_goes_first
-                game_over = False
-                user = None
-                opponent = None
 
-                while(not game_over):
+                while not game.game_over:
                     predicted_action = 0
 
-                    if players_turn is False:
+                    if game.players_turn is False:
                         #Predict opponent's action
-                        data = self.get_data_for_prediction(user, opponent)
+                        data = self.get_data_for_prediction(game.user, game.opponent)
                         #print('opponents\'s view: {}'.format(data))
                         predicted_actions = sess.run(self.model.prediction, { self.X: data })[0]
                         #predicted_actions = sess.run(tf.nn.sigmoid(predicted_actions))
                         predicted_action = np.argmax(predicted_actions) + 1
 
                     #Play Game
-                    game_over, players_turn, user, opponent, training_data = game.run(predicted_action)
+                    did_player_win = game.run(predicted_action)
 
-                    if game_over and training_data == None:
+                    if game.game_over and did_player_win == None:
                         train = False
-                    elif game_over:
+                    elif game.game_over:
                         #record winning data
-                        self.add_training_data(training_data.feature, training_data.label)
+                        if did_player_win:
+                            self.add_training_data(game.player_training_data.feature, game.player_training_data.label)
+                        else:
+                            self.add_training_data(game.opponent_training_data.feature, game.opponent_training_data.label)
 
                 #Train
-                if 1 == 2 :#train ToDo: put back to train this is to test  )
+                if train:# ToDo: put back to train this is to test  )
                     for _ in range(50):
                         
                         training_data_size = np.size(self.training_data_x, 0)
@@ -132,7 +125,6 @@ class Main:
                     "data/Charts/{} and {}.png".format(self.cost_plot.y_label, self.accuracy_plot.y_label))
 
     def start_ai_vs_ai(self, restore, number_of_games):
-        players_turn = True
         train = False
         number_of_games_played = 0
         max_turns = 20
@@ -148,18 +140,18 @@ class Main:
             while number_of_games_played < number_of_games:
                 game = Game(True, self.feature_length, self.label_length)
                 current_turns = 0
-                game_over = False
-                user = None
-                opponent = None
+                #game_over = False
+                # user = None
+                # opponent = None
                 train = False
 
-                while not game_over:
+                while not game.game_over:
                     predicted_action = 0
                     #Predict action
-                    if players_turn is False:
-                        data = self.get_data_for_prediction(user, opponent)
+                    if game.players_turn is False:
+                        data = self.get_data_for_prediction(game.user, game.opponent)
                     else:
-                        data = self.get_data_for_prediction(opponent, user)
+                        data = self.get_data_for_prediction(game.opponent, game.user)
                         
                     #print('features view: {}'.format(data))
                     predicted_actions = sess.run(self.model.prediction, { self.X: data })
@@ -175,17 +167,21 @@ class Main:
                     # predicted_action = np.random.randint(4) + 1
                     
                     #Play Game
-                    game_over, players_turn, user, opponent, training_data = game.run_ai_game(choice)
+                    did_player_1_win = game.run_ai_game(choice)
 
-                    if game_over:
+                    if game.game_over:
                         #record winning data
-                        self.add_training_data(training_data.feature, training_data.label)
+                        if did_player_1_win:
+                            self.add_training_data(game.player_training_data.feature, game.player_training_data.label)
+                        else:
+                            self.add_training_data(game.opponent_training_data.feature, game.opponent_training_data.label)
+
                         number_of_games_played += 1
                         train = True
 
                     current_turns += 1
-                    if current_turns == max_turns:
-                        game_over = True
+                    if current_turns >= max_turns:
+                        game.game_over = True
                         train = True
                         print("hit max turns")
                         
@@ -237,5 +233,5 @@ class Main:
 
 #http://localhost:6006/
 
-Main().start_user_vs_ai(True)
-#Main().start_ai_vs_ai(False, 15)
+Main().start_user_vs_ai(False)
+#Main().start_ai_vs_ai(False, 3)

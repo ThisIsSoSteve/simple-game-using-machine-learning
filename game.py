@@ -8,8 +8,8 @@ class Game:
     def __init__(self, players_turn, feature_length, label_length):
         self.players_turn = players_turn
         self.game_over = False
-        self.user = Player('user')
-        self.opponent = Player('opponent')
+        self.user = Player('user') #ToDo: Rename variable to Player_1
+        self.opponent = Player('opponent') #ToDo: Rename variable to Player_2
 
         self.game_actions = Actions()
 
@@ -57,15 +57,16 @@ class Game:
 
         if self.user.alive is False or self.opponent.alive is False:
             os.system('cls')
+            self.game_over = True
 
             if self.user.alive is False:
                 print('You lost')
-                return True, self.players_turn, self.user, self.opponent, self.opponent_training_data
+                return False #self.opponent_training_data
             else:
                 print('You Won')
-                return True, self.players_turn, self.user, self.opponent, self.player_training_data
+                return True #self.player_training_data
         
-        return self.game_over, self.players_turn, self.user, self.opponent, None
+        return None
 
     def run_ai_game(self, action):
 
@@ -89,12 +90,12 @@ class Game:
 
         if self.user.alive is False or self.opponent.alive is False:
             #os.system('cls')
-
+            self.game_over = True
             if self.user.alive is False:
                 print('AI_2 Won')
-                return True, self.players_turn, self.user, self.opponent, self.opponent_training_data
+                return False #self.opponent_training_data
             else:
                 print('AI_1 Won')
-                return True, self.players_turn, self.user, self.opponent, self.player_training_data
+                return True #self.player_training_data
         
-        return self.game_over, self.players_turn, self.user, self.opponent, None
+        return None
