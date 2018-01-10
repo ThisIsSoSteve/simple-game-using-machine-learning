@@ -34,7 +34,7 @@ class Plot:
         plt.subplot(211)
         plt.ylabel(self.y_label)
         plt.xlabel(self.x_label)
-        plt.plot(self.data)
+        plt.semilogy(self.data)
         
         plt.subplot(212)
         plt.ylabel(subplot.y_label)

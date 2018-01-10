@@ -8,6 +8,9 @@ from model import Model
 from plot import Plot
 from game import Game
 
+#os.environ['CUDA_VISIBLE_DEVICES'] = ''
+#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 #import matplotlib.pyplot as plt
 
 class Main:
@@ -26,16 +29,17 @@ class Main:
 
         self.training_data_x = np.empty((0, self.feature_length))
         self.training_data_y = np.empty((0, self.label_length))
+        self.test_training_data_x = np.empty((0, self.feature_length))
+        self.test_training_data_y = np.empty((0, self.label_length))
 
-        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
-    def add_training_data(self, features, labels):
+    def add_training_data(self, features, labels, add_to_test_data):
         self.training_data_x = np.concatenate((self.training_data_x, features), axis=0)
         self.training_data_y = np.concatenate((self.training_data_y, labels), axis=0)
-        # print('Features')
-        # print(features)
-        # print('Labels')
-        # print(labels)
+
+        if add_to_test_data:
+            self.test_training_data_x = np.concatenate((self.test_training_data_x, features), axis=0)
+            self.test_training_data_y = np.concatenate((self.test_training_data_y, labels), axis=0)
+
 
     def get_data_for_prediction(self, user, opponent):
         data = np.array([user.attack / user.max_attack,
@@ -83,12 +87,12 @@ class Main:
                     elif game.game_over:
                         #record winning data
                         if did_player_win:
-                            self.add_training_data(game.player_training_data.feature, game.player_training_data.label)
+                            self.add_training_data(game.player_training_data.feature, game.player_training_data.label, False)
                         else:
-                            self.add_training_data(game.opponent_training_data.feature, game.opponent_training_data.label)
+                            self.add_training_data(game.opponent_training_data.feature, game.opponent_training_data.label, False)
 
                 #Train
-                if train:# ToDo: put back to train this is to test  )
+                if 1 == 2:# ToDo: put back to train this is to test  )
                     for _ in range(50):
                         
                         training_data_size = np.size(self.training_data_x, 0)
@@ -104,6 +108,8 @@ class Main:
                         current_accuracy = sess.run(self.model.error, { self.X: self.training_data_x, self.Y: self.training_data_y })
                         self.cost_plot.data.append(loss)
                         self.accuracy_plot.data.append(current_accuracy)
+
+                       
 
                     print('Saving...')
                     saver.save(sess, self.checkpoint)
@@ -124,10 +130,14 @@ class Main:
                     self.cost_plot.save_sub_plot(self.accuracy_plot,
                     "data/Charts/{} and {}.png".format(self.cost_plot.y_label, self.accuracy_plot.y_label))
 
+
+    def sigmoid(self,x):
+        return 1 / (1 + np.exp(-x))
+
     def start_ai_vs_ai(self, restore, number_of_games):
         train = False
         number_of_games_played = 0
-        max_turns = 20
+        max_turns = 40
         current_turns = 0
         saver = tf.train.Saver()
 
@@ -154,14 +164,20 @@ class Main:
                         data = self.get_data_for_prediction(game.opponent, game.user)
                         
                     #print('features view: {}'.format(data))
-                    predicted_actions = sess.run(self.model.prediction, { self.X: data })
-                    probabilities = sess.run(tf.nn.softmax(predicted_actions[0]))
-                    #probabilities = np.array(probabilities)
-                    #print('p:{}, sum:{}'.format(probabilities, np.sum(probabilities)))
-
+                    predicted_actions = sess.run(self.model.prediction, { self.X: data })[0]
+                    predicted_actions = self.sigmoid(predicted_actions)
+                    MaxPred = np.sum(predicted_actions)
+                    ProbPred = predicted_actions / MaxPred
+                    # print(ProbPred)
+                    # print(MaxPred)
+                    # print(predicted_actions)
+                    # hi
+                    #probabilities = sess.run(tf.nn.softmax(predicted_actions[0]))
+                    probabilities = ProbPred
                     choices = np.arange(1, self.label_length + 1)
 
-                    choice = np.random.choice(choices, p=probabilities)                                        
+                    choice = np.random.choice(choices, p=probabilities)   
+                    #choice = 1                                     
                     
                     # predicted_action = np.argmax(predicted_actions) + 1
                     # predicted_action = np.random.randint(4) + 1
@@ -172,9 +188,11 @@ class Main:
                     if game.game_over:
                         #record winning data
                         if did_player_1_win:
-                            self.add_training_data(game.player_training_data.feature, game.player_training_data.label)
+                            self.add_training_data(game.player_training_data.feature, game.player_training_data.label, True)
+                            #self.add_training_data(game.opponent_training_data.feature, 1 - game.opponent_training_data.label, False)
                         else:
-                            self.add_training_data(game.opponent_training_data.feature, game.opponent_training_data.label)
+                            self.add_training_data(game.opponent_training_data.feature, game.opponent_training_data.label, True)
+                            #self.add_training_data(game.player_training_data.feature, 1 - game.player_training_data.label, False)
 
                         number_of_games_played += 1
                         train = True
@@ -189,9 +207,10 @@ class Main:
                     
                 #Train
                 if train and np.size(self.training_data_x, 0) > 0:
-                    for _ in range(50):
+                    for _ in range(1):
                         
                         training_data_size = np.size(self.training_data_x, 0)
+                        print(training_data_size)
                         random_range = np.arange(training_data_size)
                         np.random.shuffle(random_range)
 
@@ -201,12 +220,19 @@ class Main:
                         #_, loss = sess.run(model.optimize, { X: self.training_data_x, Y: self.training_data_y })
                         self.global_step += 1
 
-                        current_accuracy = sess.run(self.model.error, { self.X: self.training_data_x, self.Y: self.training_data_y })
-                        self.cost_plot.data.append(loss)
-                        self.accuracy_plot.data.append(current_accuracy)
+                    current_accuracy = sess.run(self.model.error, { self.X: self.test_training_data_x, self.Y: self.test_training_data_y })
+                    self.cost_plot.data.append(loss)
+                    self.accuracy_plot.data.append(current_accuracy)
 
-                    print('Saving...')
-                    saver.save(sess, self.checkpoint)
+                    self.training_data_x = np.empty((0, self.feature_length))
+                    self.training_data_y = np.empty((0, self.label_length))
+                    #self.test_training_data_x = np.empty((0, self.feature_length))
+                    #self.test_training_data_y = np.empty((0, self.label_length))
+
+
+                    #user_input = input('paused')
+                    #print('Saving...')
+                    #saver.save(sess, self.checkpoint)
 
                     print('Epoch {} - Loss {} - Accuracy {}'.format(self.global_step, loss, current_accuracy))
 
@@ -233,5 +259,5 @@ class Main:
 
 #http://localhost:6006/
 
-Main().start_user_vs_ai(False)
-#Main().start_ai_vs_ai(False, 3)
+#Main().start_user_vs_ai(True)
+Main().start_ai_vs_ai(False, 10000)

@@ -74,7 +74,7 @@ class Game:
             self.player_training_data.record(action, self.user, self.opponent, True)
 
             self.user.print_health()
-            self.game_actions.display_player_chosen_action(self.user, action)
+            #self.game_actions.display_player_chosen_action(self.user, action)
             self.game_actions.perfrom(self.user, self.opponent, action)
 
             self.players_turn = False
@@ -83,7 +83,7 @@ class Game:
             self.opponent_training_data.record(action, self.user, self.opponent, False)
 
             self.opponent.print_health()
-            self.game_actions.display_ai_chosen_action(self.opponent, action)
+            #self.game_actions.display_ai_chosen_action(self.opponent, action)
             self.game_actions.perfrom(self.opponent, self.user, action)
 
             self.players_turn = True
