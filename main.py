@@ -35,6 +35,9 @@ class Main:
         self.test_training_data_y = np.empty((0, self.label_length))
 
         #ai_vs_ai_only
+        self.negative_training_data_x = np.empty((0, self.feature_length))
+        self.negative_training_data_y = np.empty((0, self.label_length))
+
         self.ai_1_test_training_data_x = np.empty((0, self.feature_length))
         self.ai_1_test_training_data_y = np.empty((0, self.label_length))
 
@@ -51,9 +54,13 @@ class Main:
             self.test_training_data_y = np.concatenate((self.test_training_data_y, labels), axis=0)
 
     #ai_vs_ai_only
-    def add_ai_training_data(self, features, labels, add_to_test_data, did_player_1_win):
-        self.training_data_x = np.concatenate((self.training_data_x, features), axis=0)
-        self.training_data_y = np.concatenate((self.training_data_y, labels), axis=0)
+    def add_ai_training_data(self, features, labels, add_to_test_data, did_player_1_win, add_negative_data):
+        if add_negative_data:
+            self.negative_training_data_x = np.concatenate((self.negative_training_data_x, features), axis=0)
+            self.negative_training_data_y = np.concatenate((self.negative_training_data_y, labels), axis=0)
+        else:
+            self.training_data_x = np.concatenate((self.training_data_x, features), axis=0)
+            self.training_data_y = np.concatenate((self.training_data_y, labels), axis=0)
 
         if add_to_test_data:
             if did_player_1_win:
@@ -194,11 +201,13 @@ class Main:
                     #Predict action
                     if game.players_turn is False:
                         data = self.get_data_for_prediction(game.user, game.opponent)
+                        predicted_actions = sess.run(ai_2_model.prediction, { self.X: data })[0]
                     else:
                         data = self.get_data_for_prediction(game.opponent, game.user)
+                        predicted_actions = sess.run(ai_1_model.prediction, { self.X: data })[0]
                         
                     #print('features view: {}'.format(data))
-                    predicted_actions = sess.run(ai_1_model.prediction, { self.X: data })[0]
+                    
                     predicted_actions = self.sigmoid(predicted_actions)
 
                     #get prodability (much faster than tf.nn.softmax)
@@ -218,12 +227,13 @@ class Main:
                     if game.game_over:
                         #record winning data
                         if did_player_1_win:
-                            self.add_ai_training_data(game.player_training_data.feature, game.player_training_data.label, True, True)
+                            self.add_ai_training_data(game.player_training_data.feature, game.player_training_data.label, True, True, False)
                             ai_1_wins += 1
-                            #self.add_training_data(game.opponent_training_data.feature, 1 - game.opponent_training_data.label, False)
+                            self.add_ai_training_data(game.opponent_training_data.feature, 1 - game.opponent_training_data.label, False, True, True)
                         else:
-                            self.add_ai_training_data(game.opponent_training_data.feature, game.opponent_training_data.label, True, False)
+                            self.add_ai_training_data(game.opponent_training_data.feature, game.opponent_training_data.label, True, False, False)
                             ai_2_wins += 1
+                            self.add_ai_training_data(game.player_training_data.feature, 1 - game.player_training_data.label, False, False, True)
                             #self.add_training_data(game.player_training_data.feature, 1 - game.player_training_data.label, False)
 
                         number_of_games_played += 1
@@ -244,32 +254,47 @@ class Main:
                         training_data_size = np.size(self.training_data_x, 0)
                         # random_range = np.arange(training_data_size)
                         # np.random.shuffle(random_range)
+                        ai_1_loss = 0
+                        ai_2_loss = 0
 
+                        #Train 'positive' data for loser
                         for i in range(training_data_size):
                             #random_index = random_range[i]
                             if did_player_1_win:
-                                _, loss = sess.run(ai_1_model.optimize, { self.X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[i],(-1, 4))})
+                                _, ai_1_loss = sess.run(ai_1_model.optimize, { self.X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[i],(-1, 4))})
                             else:
-                                _, loss = sess.run(ai_2_model.optimize, { self.X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[i],(-1, 4))})
+                                _, ai_2_loss = sess.run(ai_2_model.optimize, { self.X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[i],(-1, 4))})
+                        
+                        training_data_size = np.size(self.negative_training_data_x, 0)
+                        #Train 'negative' data for loser
+                        for i in range(training_data_size):
+
+                            if did_player_1_win is False:
+                                _, ai_1_loss = sess.run(ai_1_model.optimize, { self.X: np.reshape(self.negative_training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.negative_training_data_y[i],(-1, 4))})
+                            else:
+                                _, ai_2_loss = sess.run(ai_2_model.optimize, { self.X: np.reshape(self.negative_training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.negative_training_data_y[i],(-1, 4))})
 
                         self.global_step += 1
 
-                    if did_player_1_win:
-                        current_accuracy = sess.run(ai_1_model.error, { self.X: self.ai_1_test_training_data_x, self.Y: self.ai_1_test_training_data_y })
-                        ai_1_cost_plot.data.append(loss)
-                        ai_1_accuracy_plot.data.append(current_accuracy)
-                        ai_1_cost_plot.save_sub_plot(ai_1_accuracy_plot,
-                            "data/Charts/ai_1 {} and {}.png".format(ai_1_cost_plot.y_label, ai_1_accuracy_plot.y_label))
-                    else:
-                        current_accuracy = sess.run(ai_2_model.error, { self.X: self.ai_2_test_training_data_x, self.Y: self.ai_2_test_training_data_y })
-                        ai_2_cost_plot.data.append(loss)
-                        ai_2_accuracy_plot.data.append(current_accuracy)
-                        ai_2_cost_plot.save_sub_plot(ai_2_accuracy_plot,
-                            "data/Charts/ai_2 {} and {}.png".format(ai_2_cost_plot.y_label, ai_2_accuracy_plot.y_label))
                     
-
+                    ai_1_current_accuracy = sess.run(ai_1_model.error, { self.X: self.ai_1_test_training_data_x, self.Y: self.ai_1_test_training_data_y })
+                    ai_1_cost_plot.data.append(ai_1_loss)
+                    ai_1_accuracy_plot.data.append(ai_1_current_accuracy)
+                    ai_1_cost_plot.save_sub_plot(ai_1_accuracy_plot,
+                        "data/Charts/ai_1 {} and {}.png".format(ai_1_cost_plot.y_label, ai_1_accuracy_plot.y_label))
+                
+                    ai_2_current_accuracy = sess.run(ai_2_model.error, { self.X: self.ai_2_test_training_data_x, self.Y: self.ai_2_test_training_data_y })
+                    ai_2_cost_plot.data.append(ai_2_loss)
+                    ai_2_accuracy_plot.data.append(ai_2_current_accuracy)
+                    ai_2_cost_plot.save_sub_plot(ai_2_accuracy_plot,
+                        "data/Charts/ai_2 {} and {}.png".format(ai_2_cost_plot.y_label, ai_2_accuracy_plot.y_label))
+                    
+                    #clear training data
                     self.training_data_x = np.empty((0, self.feature_length))
                     self.training_data_y = np.empty((0, self.label_length))
+
+                    self.negative_training_data_x = np.empty((0, self.feature_length))
+                    self.negative_ttraining_data_y = np.empty((0, self.label_length))
                     #self.test_training_data_x = np.empty((0, self.feature_length))
                     #self.test_training_data_y = np.empty((0, self.label_length))
 
@@ -278,8 +303,13 @@ class Main:
                     #print('Saving...')
                     #saver.save(sess, self.checkpoint)
 
-                    print('Epoch: {} - Loss: {} - Accuracy: {} - ai 1 wins:{} - ai 2 wins: {}'
-                    .format(self.global_step, loss, current_accuracy, ai_1_wins, ai_2_wins))
+                    print('Epoch {}'.format(self.global_step))
+
+                    print('AI_1: Loss {} - Accuracy: {} - Wins {}'
+                    .format(ai_1_loss, ai_1_current_accuracy, ai_1_wins))
+
+                    print('AI_2: Loss {} - Accuracy: {} - Wins {}'
+                    .format(ai_2_loss, ai_2_current_accuracy, ai_2_wins))
 
                     #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
                     
@@ -291,10 +321,6 @@ class Main:
                     # plt.ylabel('Inputs')
                     # plt.show()
                     # plt.close()
-                    
-                   
-
-                   
 
                     # user_input = input('Continue (y/n)')
                     # if user_input == 'n':
