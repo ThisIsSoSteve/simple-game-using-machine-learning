@@ -69,11 +69,13 @@ class Game:
         return None
 
     def run_ai_game(self, action):
+        self.user.print_game_text = False
+        self.opponent.print_game_text = False
 
         if self.players_turn: #AI_1
             self.player_training_data.record(action, self.user, self.opponent, True)
 
-            self.user.print_health()
+            #self.user.print_health()
             #self.game_actions.display_player_chosen_action(self.user, action)
             self.game_actions.perfrom(self.user, self.opponent, action)
 
@@ -82,7 +84,7 @@ class Game:
         else: #AI_2
             self.opponent_training_data.record(action, self.user, self.opponent, False)
 
-            self.opponent.print_health()
+            #self.opponent.print_health()
             #self.game_actions.display_ai_chosen_action(self.opponent, action)
             self.game_actions.perfrom(self.opponent, self.user, action)
 

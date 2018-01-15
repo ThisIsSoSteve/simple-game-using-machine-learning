@@ -56,10 +56,12 @@ class Main:
     #ai_vs_ai_only
     def add_ai_training_data(self, features, labels, add_to_test_data, did_player_1_win, add_negative_data):
         if add_negative_data:
-            labels.fill(1)
-            #labels = 1 - labels
+            #labels.fill(0.25)
+            labels = 1 - labels
+            #labels = labels * -0.25
             self.negative_training_data_x = np.concatenate((self.negative_training_data_x, features), axis=0)
             self.negative_training_data_y = np.concatenate((self.negative_training_data_y, labels), axis=0)
+            add_to_test_data = False
         else:
             self.training_data_x = np.concatenate((self.training_data_x, features), axis=0)
             self.training_data_y = np.concatenate((self.training_data_y, labels), axis=0)
@@ -180,7 +182,7 @@ class Main:
 
         train = False
         number_of_games_played = 0
-        max_turns = 20
+        max_turns = 10
         current_turns = 0
         saver = tf.train.Saver()
 
@@ -253,12 +255,14 @@ class Main:
                             train = False
                             number_of_games_played -= 1
                             ai_2_wins -= 1
+                            print('AI 2 is winning too much')
                     #if ai 1 is winning too much
                     elif ai_1_wins > ai_2_wins + 2:
                         if did_player_1_win:
                             train = False
                             number_of_games_played -= 1
                             ai_1_wins -= 1
+                            print('AI 1 is winning too much')
                     
                 #Train
                 if train and np.size(self.training_data_x, 0) > 0:
