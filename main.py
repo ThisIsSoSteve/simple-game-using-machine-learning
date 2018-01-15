@@ -332,4 +332,4 @@ class Main:
 #http://localhost:6006/
 
 #Main().start_user_vs_ai(False)
-Main().start_ai_vs_ai(False, 1000)
+Main().start_ai_vs_ai(False, 10)
