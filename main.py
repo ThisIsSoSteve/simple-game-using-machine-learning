@@ -56,6 +56,8 @@ class Main:
     #ai_vs_ai_only
     def add_ai_training_data(self, features, labels, add_to_test_data, did_player_1_win, add_negative_data):
         if add_negative_data:
+            labels.fill(1)
+            #labels = 1 - labels
             self.negative_training_data_x = np.concatenate((self.negative_training_data_x, features), axis=0)
             self.negative_training_data_y = np.concatenate((self.negative_training_data_y, labels), axis=0)
         else:
@@ -178,7 +180,7 @@ class Main:
 
         train = False
         number_of_games_played = 0
-        max_turns = 40
+        max_turns = 20
         current_turns = 0
         saver = tf.train.Saver()
 
@@ -229,11 +231,11 @@ class Main:
                         if did_player_1_win:
                             self.add_ai_training_data(game.player_training_data.feature, game.player_training_data.label, True, True, False)
                             ai_1_wins += 1
-                            self.add_ai_training_data(game.opponent_training_data.feature, 1 - game.opponent_training_data.label, False, True, True)
+                            self.add_ai_training_data(game.opponent_training_data.feature, game.opponent_training_data.label, False, True, True)
                         else:
                             self.add_ai_training_data(game.opponent_training_data.feature, game.opponent_training_data.label, True, False, False)
                             ai_2_wins += 1
-                            self.add_ai_training_data(game.player_training_data.feature, 1 - game.player_training_data.label, False, False, True)
+                            self.add_ai_training_data(game.player_training_data.feature, game.player_training_data.label, False, False, True)
                             #self.add_training_data(game.player_training_data.feature, 1 - game.player_training_data.label, False)
 
                         number_of_games_played += 1
@@ -242,10 +244,21 @@ class Main:
                     current_turns += 1
                     if current_turns >= max_turns:
                         game.game_over = True
-                        train = True
+                        train = False
                         print("hit max turns")
-                        
 
+                    #if ai 2 is winning too much
+                    if ai_2_wins > ai_1_wins + 2:
+                        if did_player_1_win is False:
+                            train = False
+                            number_of_games_played -= 1
+                            ai_2_wins -= 1
+                    #if ai 1 is winning too much
+                    elif ai_1_wins > ai_2_wins + 2:
+                        if did_player_1_win:
+                            train = False
+                            number_of_games_played -= 1
+                            ai_1_wins -= 1
                     
                 #Train
                 if train and np.size(self.training_data_x, 0) > 0:
@@ -265,36 +278,40 @@ class Main:
                             else:
                                 _, ai_2_loss = sess.run(ai_2_model.optimize, { self.X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[i],(-1, 4))})
                         
-                        training_data_size = np.size(self.negative_training_data_x, 0)
-                        #Train 'negative' data for loser
-                        for i in range(training_data_size):
+                        # training_data_size = np.size(self.negative_training_data_x, 0)
+                        # #Train 'negative' data for loser
+                        # for i in range(training_data_size):
 
-                            if did_player_1_win is False:
-                                _, ai_1_loss = sess.run(ai_1_model.optimize, { self.X: np.reshape(self.negative_training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.negative_training_data_y[i],(-1, 4))})
-                            else:
-                                _, ai_2_loss = sess.run(ai_2_model.optimize, { self.X: np.reshape(self.negative_training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.negative_training_data_y[i],(-1, 4))})
+                        #     if did_player_1_win is False:
+                        #         _, ai_1_loss = sess.run(ai_1_model.optimize, { self.X: np.reshape(self.negative_training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.negative_training_data_y[i],(-1, 4))})
+                        #     else:
+                        #         _, ai_2_loss = sess.run(ai_2_model.optimize, { self.X: np.reshape(self.negative_training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.negative_training_data_y[i],(-1, 4))})
 
                         self.global_step += 1
 
+                    print('Epoch {}'.format(self.global_step))
+                    if did_player_1_win:
+                        ai_1_current_accuracy = sess.run(ai_1_model.error, { self.X: self.ai_1_test_training_data_x, self.Y: self.ai_1_test_training_data_y })
+                        ai_1_cost_plot.data.append(ai_1_loss)
+                        ai_1_accuracy_plot.data.append(ai_1_current_accuracy)
+                        ai_1_cost_plot.save_sub_plot(ai_1_accuracy_plot,
+                            "data/Charts/ai_1 {} and {}.png".format(ai_1_cost_plot.y_label, ai_1_accuracy_plot.y_label))
+                        print('AI_1: Loss {} - Accuracy: {} - Wins {}'.format(ai_1_loss, ai_1_current_accuracy, ai_1_wins))
+                    else:
+                        ai_2_current_accuracy = sess.run(ai_2_model.error, { self.X: self.ai_2_test_training_data_x, self.Y: self.ai_2_test_training_data_y })
+                        ai_2_cost_plot.data.append(ai_2_loss)
+                        ai_2_accuracy_plot.data.append(ai_2_current_accuracy)
+                        ai_2_cost_plot.save_sub_plot(ai_2_accuracy_plot,
+                            "data/Charts/ai_2 {} and {}.png".format(ai_2_cost_plot.y_label, ai_2_accuracy_plot.y_label))
+                        print('AI_2: Loss {} - Accuracy: {} - Wins {}'.format(ai_2_loss, ai_2_current_accuracy, ai_2_wins))
                     
-                    ai_1_current_accuracy = sess.run(ai_1_model.error, { self.X: self.ai_1_test_training_data_x, self.Y: self.ai_1_test_training_data_y })
-                    ai_1_cost_plot.data.append(ai_1_loss)
-                    ai_1_accuracy_plot.data.append(ai_1_current_accuracy)
-                    ai_1_cost_plot.save_sub_plot(ai_1_accuracy_plot,
-                        "data/Charts/ai_1 {} and {}.png".format(ai_1_cost_plot.y_label, ai_1_accuracy_plot.y_label))
-                
-                    ai_2_current_accuracy = sess.run(ai_2_model.error, { self.X: self.ai_2_test_training_data_x, self.Y: self.ai_2_test_training_data_y })
-                    ai_2_cost_plot.data.append(ai_2_loss)
-                    ai_2_accuracy_plot.data.append(ai_2_current_accuracy)
-                    ai_2_cost_plot.save_sub_plot(ai_2_accuracy_plot,
-                        "data/Charts/ai_2 {} and {}.png".format(ai_2_cost_plot.y_label, ai_2_accuracy_plot.y_label))
-                    
-                    #clear training data
-                    self.training_data_x = np.empty((0, self.feature_length))
-                    self.training_data_y = np.empty((0, self.label_length))
+                    print('AI_1 wins {} : AI_2 wins {}'.format(ai_1_wins, ai_2_wins))
+                #clear training data
+                self.training_data_x = np.empty((0, self.feature_length))
+                self.training_data_y = np.empty((0, self.label_length))
 
-                    self.negative_training_data_x = np.empty((0, self.feature_length))
-                    self.negative_ttraining_data_y = np.empty((0, self.label_length))
+                self.negative_training_data_x = np.empty((0, self.feature_length))
+                self.negative_ttraining_data_y = np.empty((0, self.label_length))
                     #self.test_training_data_x = np.empty((0, self.feature_length))
                     #self.test_training_data_y = np.empty((0, self.label_length))
 
@@ -303,13 +320,6 @@ class Main:
                     #print('Saving...')
                     #saver.save(sess, self.checkpoint)
 
-                    print('Epoch {}'.format(self.global_step))
-
-                    print('AI_1: Loss {} - Accuracy: {} - Wins {}'
-                    .format(ai_1_loss, ai_1_current_accuracy, ai_1_wins))
-
-                    print('AI_2: Loss {} - Accuracy: {} - Wins {}'
-                    .format(ai_2_loss, ai_2_current_accuracy, ai_2_wins))
 
                     #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
                     
@@ -332,4 +342,4 @@ class Main:
 #http://localhost:6006/
 
 #Main().start_user_vs_ai(False)
-Main().start_ai_vs_ai(False, 10)
+Main().start_ai_vs_ai(False, 1000)

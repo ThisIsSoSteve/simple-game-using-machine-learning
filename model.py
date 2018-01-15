@@ -18,7 +18,7 @@ class Model:
     def prediction(self):
         feature_size = 6
         label_size = 4
-        layer_1_size = 40
+        layer_1_size = 10
 
         with tf.variable_scope(self.scope_name + '_layer_1') as scope:
             layer_1_weights = tf.Variable(tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.001, maxval = 0.01), name="weights")
@@ -35,7 +35,7 @@ class Model:
 
     @lazy_property
     def optimize(self):
-        learning_rate = 0.3
+        learning_rate = 0.1
         cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=self.prediction, labels=self.label))
         #return tf.train.AdamOptimizer(learning_rate = learning_rate).minimize(cost), cost
         return tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(cost), cost
