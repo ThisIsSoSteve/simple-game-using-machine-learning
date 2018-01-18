@@ -21,7 +21,9 @@ class Model:
         layer_1_size = 10
 
         with tf.variable_scope(self.scope_name + '_layer_1') as scope:
-            layer_1_weights = tf.Variable(tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.001, maxval = 0.01), name="weights")
+
+            layer_1_weights = tf.get_variable('weights', initializer=tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.001, maxval = 0.01))
+            #layer_1_weights = tf.Variable(tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.001, maxval = 0.01), name="weights")
             #layer_1_weights = tf.Variable(tf.constant(0.0, shape=[feature_size, layer_1_size]), name="weights")
             layer_1_biases = tf.Variable(tf.constant(0.001, shape = [layer_1_size]), name = "biases")
             layer_1 = tf.nn.relu(tf.matmul(self.feature, layer_1_weights) + layer_1_biases)

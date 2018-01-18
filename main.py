@@ -11,7 +11,7 @@ from game import Game
 #os.environ['CUDA_VISIBLE_DEVICES'] = ''
 #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 #todo separate ai_vs_ai and user_vs_ai
 class Main:
@@ -85,17 +85,31 @@ class Main:
         return np.reshape(data, (-1, self.feature_length))
 
     def start_user_vs_ai(self, restore):
-        model = Model('ai', self.X, self.Y)
+        ai_1_model = Model('ai_1', self.X, self.Y)
+        model = Model('ai_2', self.X, self.Y)
         train = True
         players_turn = True
         player_goes_first = True
         saver = tf.train.Saver()
 
         with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
+            #sess.run(tf.global_variables_initializer())
 
             if restore:
+                #tf.saved_model.loader.load(sess, ['trained'], 'data/checkpoints/meta')
                 saver.restore(sess, self.checkpoint)
+            else:
+                sess.run(tf.global_variables_initializer())
+
+            weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='ai_2_layer_1/weights:0'))[0]
+                
+            plt.close('all')
+            plt.figure()
+            plt.imshow(weights, cmap='Greys_r', interpolation='none')
+            plt.xlabel('Nodes')
+            plt.ylabel('Inputs')
+            plt.show()
+            plt.close()
 
             while train:
                 game = Game(player_goes_first, self.feature_length, self.label_length)
@@ -125,8 +139,9 @@ class Main:
                         else:
                             self.add_training_data(game.opponent_training_data.feature, game.opponent_training_data.label, False)
 
+                   
                 #Train
-                if train:# ToDo: put back to train this is to test  )
+                if 1 == 2:# ToDo: put back to train this is to test  )
                     for _ in range(50):
                         
                         training_data_size = np.size(self.training_data_x, 0)
@@ -150,16 +165,7 @@ class Main:
 
                     print('Epoch {} - Loss {} - Accuracy {}'.format(self.global_step, loss, current_accuracy))
 
-                    #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
-                    
-                    #Move out into class
-                    # plt.close('all')
-                    # plt.figure()
-                    # plt.imshow(weights, cmap='Greys_r', interpolation='none')
-                    # plt.xlabel('Nodes')
-                    # plt.ylabel('Inputs')
-                    # plt.show()
-                    # plt.close()
+                   
 
                     self.cost_plot.save_sub_plot(self.accuracy_plot,
                     "data/Charts/{} and {}.png".format(self.cost_plot.y_label, self.accuracy_plot.y_label))
@@ -182,15 +188,16 @@ class Main:
 
         train = False
         number_of_games_played = 0
-        max_turns = 10
+        max_turns = 8
         current_turns = 0
         saver = tf.train.Saver()
+        #builder = tf.saved_model.builder.SavedModelBuilder('data/Checkpoints/meta')
 
         with tf.Session() as sess:
+            # if restore:
+            #     saver.restore(sess, self.checkpoint)
+            # else:
             sess.run(tf.global_variables_initializer())
-
-            if restore:
-                saver.restore(sess, self.checkpoint)
 
             while number_of_games_played < number_of_games:
                 game = Game(True, self.feature_length, self.label_length)
@@ -321,8 +328,26 @@ class Main:
 
 
                     #user_input = input('paused')
-                    #print('Saving...')
-                    #saver.save(sess, self.checkpoint)
+            print('Saving...')
+            # builder.add_meta_graph_and_variables(sess, ['trained'])
+            # builder.save(as_text=True)
+            saver.save(sess, self.checkpoint)
+
+
+            #a1_1_full_testing_data = np.array([self.ai_1_test_training_data_x, self.ai_1_test_training_data_y.reshape(12, 4)])
+            np.savetxt('data/checkpoints/ai_1_full_testing_data.txt', self.ai_1_test_training_data_y)
+            np.savetxt('data/checkpoints/ai_2_full_testing_data.txt', self.ai_2_test_training_data_y)
+
+            weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='ai_2_layer_1/weights:0'))[0]
+                
+            plt.close('all')
+            plt.figure()
+            plt.imshow(weights, cmap='Greys_r', interpolation='none')
+            plt.xlabel('Nodes')
+            plt.ylabel('Inputs')
+            plt.show()
+            plt.close()
+
 
 
                     #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
@@ -345,5 +370,5 @@ class Main:
 
 #http://localhost:6006/
 
-#Main().start_user_vs_ai(False)
-Main().start_ai_vs_ai(False, 1000)
+#Main().start_user_vs_ai(True)
+Main().start_ai_vs_ai(False, 150)
