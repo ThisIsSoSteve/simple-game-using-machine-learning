@@ -6,10 +6,11 @@ using structure from https://danijar.com/structuring-your-tensorflow-models/
 '''
 class Model:
 
-    def __init__(self, scope_name, feature, label):
+    def __init__(self, scope_name, feature, label, keep_probability):
         self.scope_name = scope_name
         self.feature = feature
         self.label = label
+        self.keep_probability = keep_probability
         self.prediction
         self.optimize
         self.error
@@ -22,16 +23,17 @@ class Model:
 
         with tf.variable_scope(self.scope_name + '_layer_1') as scope:
 
-            layer_1_weights = tf.get_variable('weights', initializer=tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.001, maxval = 0.01))
-            #layer_1_weights = tf.Variable(tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.001, maxval = 0.01), name="weights")
-            #layer_1_weights = tf.Variable(tf.constant(0.0, shape=[feature_size, layer_1_size]), name="weights")
+            #layer_1_weights = tf.get_variable('weights', initializer=tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.001, maxval = 0.01))
+            layer_1_weights = tf.Variable(tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.001, maxval = 0.01), name="weights")
             layer_1_biases = tf.Variable(tf.constant(0.001, shape = [layer_1_size]), name = "biases")
             layer_1 = tf.nn.relu(tf.matmul(self.feature, layer_1_weights) + layer_1_biases)
+
+        drop_out = tf.nn.dropout(layer_1, self.keep_probability) 
 
         with tf.variable_scope(self.scope_name +'_layer_output') as scope:
             output_weights = tf.Variable(tf.random_uniform(shape = [layer_1_size, label_size], minval = 0.001, maxval = 0.01), name = "weights")
             output_biases = tf.Variable(tf.constant(0.001, shape = [label_size]), name = "biases")
-            output = tf.matmul(layer_1, output_weights) + output_biases
+            output = tf.matmul(drop_out, output_weights) + output_biases
 
         return output
 

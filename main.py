@@ -8,6 +8,8 @@ from model import Model
 from plot import Plot
 from game import Game
 
+from random import randint
+
 #os.environ['CUDA_VISIBLE_DEVICES'] = ''
 #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -25,6 +27,7 @@ class Main:
 
         self.X = tf.placeholder(tf.float32, [None, self.feature_length])
         self.Y = tf.placeholder(tf.float32, [None, self.label_length])
+        self.keep_probability = tf.placeholder(tf.float32)
         self.global_step = 0
 
         self.training_data_x = np.empty((0, self.feature_length))
@@ -85,8 +88,8 @@ class Main:
         return np.reshape(data, (-1, self.feature_length))
 
     def start_user_vs_ai(self, restore):
-        ai_1_model = Model('ai_1', self.X, self.Y)
-        model = Model('ai_2', self.X, self.Y)
+        ai_1_model = Model('ai_1', self.X, self.Y, self.keep_probability)
+        model = Model('ai_2', self.X, self.Y, self.keep_probability)
         train = True
         players_turn = True
         player_goes_first = True
@@ -174,8 +177,8 @@ class Main:
         return 1 / (1 + np.exp(-x))
 
     def start_ai_vs_ai(self, restore, number_of_games):
-        ai_1_model = Model('ai_1', self.X, self.Y)
-        ai_2_model = Model('ai_2', self.X, self.Y)
+        ai_1_model = Model('ai_1', self.X, self.Y, self.keep_probability)
+        ai_2_model = Model('ai_2', self.X, self.Y, self.keep_probability)
 
         ai_1_wins = 0
         ai_2_wins = 0
@@ -188,7 +191,7 @@ class Main:
 
         train = False
         number_of_games_played = 0
-        max_turns = 8
+        max_turns = 20
         current_turns = 0
         saver = tf.train.Saver()
         #builder = tf.saved_model.builder.SavedModelBuilder('data/Checkpoints/meta')
@@ -206,28 +209,48 @@ class Main:
                 # user = None
                 # opponent = None
                 train = False
+                add_data = True
 
                 while not game.game_over:
-                    predicted_action = 0
-                    #Predict action
+                    #predicted_action = 0
+                    # #Predict action
                     if game.players_turn is False:
                         data = self.get_data_for_prediction(game.user, game.opponent)
-                        predicted_actions = sess.run(ai_2_model.prediction, { self.X: data })[0]
+                        predicted_actions = sess.run(ai_2_model.prediction, { self.X: data, self.keep_probability: 1.0 })[0]
                     else:
                         data = self.get_data_for_prediction(game.opponent, game.user)
-                        predicted_actions = sess.run(ai_1_model.prediction, { self.X: data })[0]
+                        predicted_actions = sess.run(ai_1_model.prediction, { self.X: data, self.keep_probability: 1.0 })[0]
                         
                     #print('features view: {}'.format(data))
                     
+                    
+
+
                     predicted_actions = self.sigmoid(predicted_actions)
 
-                    #get prodability (much faster than tf.nn.softmax)
-                    max_prediction = np.sum(predicted_actions)
-                    probability_predicted = predicted_actions / max_prediction
-                    probabilities = probability_predicted
-                    choices = np.arange(1, self.label_length + 1)
+                    ##get prodability (much faster than tf.nn.softmax)
+                    # max_prediction = np.sum(predicted_actions)
+                    # probability_predicted = predicted_actions / max_prediction
+                    # probabilities = probability_predicted
+                    # choices = np.arange(1, self.label_length + 1)
 
-                    choice = np.random.choice(choices, p=probabilities)   
+                    # choice = np.random.choice(choices, p=probabilities)   
+
+                    if (ai_1_wins > ai_2_wins and game.players_turn) or (ai_2_wins > ai_1_wins and game.players_turn  is False):
+                        choice = np.argmax(predicted_actions) + 1
+                        #print('predicted')
+                    else:
+                        choice = randint(1,4)
+                        #get prodability (much faster than tf.nn.softmax)
+                        # max_prediction = np.sum(predicted_actions)
+                        # probability_predicted = predicted_actions / max_prediction
+                        # probabilities = probability_predicted
+                        # choices = np.arange(1, self.label_length + 1)
+
+                        #choice = np.random.choice(choices, p=probabilities)   
+                    
+
+
                     #Some reason tf.nn.softmax progressively slows the program to a crawl in about 20 games.
                     #not sure why seems to only happen in windows
                     #probabilities = sess.run(tf.nn.softmax(predicted_actions[0]))                                    
@@ -235,42 +258,48 @@ class Main:
                     #Play Game
                     did_player_1_win = game.run_ai_game(choice)
 
-                    if game.game_over:
-                        #record winning data
-                        if did_player_1_win:
-                            self.add_ai_training_data(game.player_training_data.feature, game.player_training_data.label, True, True, False)
-                            ai_1_wins += 1
-                            self.add_ai_training_data(game.opponent_training_data.feature, game.opponent_training_data.label, False, True, True)
-                        else:
-                            self.add_ai_training_data(game.opponent_training_data.feature, game.opponent_training_data.label, True, False, False)
-                            ai_2_wins += 1
-                            self.add_ai_training_data(game.player_training_data.feature, game.player_training_data.label, False, False, True)
-                            #self.add_training_data(game.player_training_data.feature, 1 - game.player_training_data.label, False)
-
-                        number_of_games_played += 1
-                        train = True
-
                     current_turns += 1
                     if current_turns >= max_turns:
                         game.game_over = True
-                        train = False
+                        add_data = False
+                        #train = False
                         print("hit max turns")
 
                     #if ai 2 is winning too much
                     if ai_2_wins > ai_1_wins + 2:
                         if did_player_1_win is False:
-                            train = False
-                            number_of_games_played -= 1
-                            ai_2_wins -= 1
-                            print('AI 2 is winning too much')
+                            add_data = False
+                           # train = False
+                            #number_of_games_played -= 1
+                            #ai_2_wins -= 1
+                            #print('AI 2 is winning too much')
                     #if ai 1 is winning too much
                     elif ai_1_wins > ai_2_wins + 2:
                         if did_player_1_win:
-                            train = False
-                            number_of_games_played -= 1
-                            ai_1_wins -= 1
-                            print('AI 1 is winning too much')
+                            add_data = False
+                            #train = False
+                            #number_of_games_played -= 1
+                            #ai_1_wins -= 1
+                            #print('AI 1 is winning too much')
+
+                    if game.game_over and add_data:
+                        #record winning data
+                        if did_player_1_win:
+                            self.add_ai_training_data(game.player_training_data.feature, game.player_training_data.label, True, True, False)
+                            ai_1_wins += 1
+                            
+                            #self.add_ai_training_data(game.opponent_training_data.feature, game.opponent_training_data.label, False, True, True)
+                        else:
+                            self.add_ai_training_data(game.opponent_training_data.feature, game.opponent_training_data.label, True, False, False)
+                            ai_2_wins += 1
+                            
+                            #self.add_ai_training_data(game.player_training_data.feature, game.player_training_data.label, False, False, True)
+                            #self.add_training_data(game.player_training_data.feature, 1 - game.player_training_data.label, False)
+                        
+                        number_of_games_played += 1
+                        train = True
                     
+
                 #Train
                 if train and np.size(self.training_data_x, 0) > 0:
                     for _ in range(1):
@@ -285,9 +314,11 @@ class Main:
                         for i in range(training_data_size):
                             #random_index = random_range[i]
                             if did_player_1_win:
-                                _, ai_1_loss = sess.run(ai_1_model.optimize, { self.X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[i],(-1, 4))})
+                                _, ai_1_loss = sess.run(ai_1_model.optimize, 
+                                { self.X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[i],(-1, 4)), self.keep_probability: 0.3})
                             else:
-                                _, ai_2_loss = sess.run(ai_2_model.optimize, { self.X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[i],(-1, 4))})
+                                _, ai_2_loss = sess.run(ai_2_model.optimize, 
+                                { self.X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[i],(-1, 4)), self.keep_probability: 1.0})
                         
                         # training_data_size = np.size(self.negative_training_data_x, 0)
                         # #Train 'negative' data for loser
@@ -302,14 +333,14 @@ class Main:
 
                     print('Epoch {}'.format(self.global_step))
                     if did_player_1_win:
-                        ai_1_current_accuracy = sess.run(ai_1_model.error, { self.X: self.ai_1_test_training_data_x, self.Y: self.ai_1_test_training_data_y })
+                        ai_1_current_accuracy = sess.run(ai_1_model.error, { self.X: self.ai_1_test_training_data_x, self.Y: self.ai_1_test_training_data_y, self.keep_probability: 1.0 })
                         ai_1_cost_plot.data.append(ai_1_loss)
                         ai_1_accuracy_plot.data.append(ai_1_current_accuracy)
                         ai_1_cost_plot.save_sub_plot(ai_1_accuracy_plot,
                             "data/Charts/ai_1 {} and {}.png".format(ai_1_cost_plot.y_label, ai_1_accuracy_plot.y_label))
                         print('AI_1: Loss {} - Accuracy: {} - Wins {}'.format(ai_1_loss, ai_1_current_accuracy, ai_1_wins))
                     else:
-                        ai_2_current_accuracy = sess.run(ai_2_model.error, { self.X: self.ai_2_test_training_data_x, self.Y: self.ai_2_test_training_data_y })
+                        ai_2_current_accuracy = sess.run(ai_2_model.error, { self.X: self.ai_2_test_training_data_x, self.Y: self.ai_2_test_training_data_y, self.keep_probability: 1.0 })
                         ai_2_cost_plot.data.append(ai_2_loss)
                         ai_2_accuracy_plot.data.append(ai_2_current_accuracy)
                         ai_2_cost_plot.save_sub_plot(ai_2_accuracy_plot,
@@ -322,7 +353,7 @@ class Main:
                 self.training_data_y = np.empty((0, self.label_length))
 
                 self.negative_training_data_x = np.empty((0, self.feature_length))
-                self.negative_ttraining_data_y = np.empty((0, self.label_length))
+                self.negative_training_data_y = np.empty((0, self.label_length))
                     #self.test_training_data_x = np.empty((0, self.feature_length))
                     #self.test_training_data_y = np.empty((0, self.label_length))
 
@@ -371,4 +402,5 @@ class Main:
 #http://localhost:6006/
 
 #Main().start_user_vs_ai(True)
-Main().start_ai_vs_ai(False, 150)
+Main().start_ai_vs_ai(False, 1000)
+ 

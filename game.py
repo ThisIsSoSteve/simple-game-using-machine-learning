@@ -94,10 +94,10 @@ class Game:
             #os.system('cls')
             self.game_over = True
             if self.user.alive is False:
-                print('AI_2 Won')
+                #print('AI_2 Won')
                 return False #self.opponent_training_data
             else:
-                print('AI_1 Won')
+                #print('AI_1 Won')
                 return True #self.player_training_data
         
         return None
