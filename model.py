@@ -43,18 +43,3 @@ class Model:
     def error(self):
         correct_prediction = tf.equal(tf.argmax(self.prediction, 1), tf.argmax(self.label, 1))
         return tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-'''
-Layer_1 Activations (number of epochs to learn 2 different tactics (50 epoch increments))
-    Sigmoid: 600 epochs (biases = 0.0)
-    Sigmoid: 650 epochs (biases = 0.01)
-    Tanh: 400 epochs (biases = 0.0)
-    Elu: 300 - 400 epcohs (biases = 0.0)
-    Relu: 300 - 400 epochs (biases = 0.0)
-    Relu6 300 - 400 epochs (biases = 0.0)
-
-Shuffling the data helps learning:
-    Relu 200 - 250 epochs (biases = 0.0)
-
-If the weights start at initialised at 0 then the training time doubles
-'''

@@ -57,12 +57,15 @@ class Game:
 
         if self.user.alive is False or self.opponent.alive is False:
             os.system('cls')
+            self.game_over = True
 
             if self.user.alive is False:
                 print('You lost')
-                return True, self.players_turn, self.user, self.opponent, self.opponent_training_data
+                return False
+                #return True, self.players_turn, self.user, self.opponent, self.opponent_training_data
             else:
                 print('You Won')
-                return True, self.players_turn, self.user, self.opponent, self.player_training_data
-        
-        return self.game_over, self.players_turn, self.user, self.opponent, None
+                return True
+                #return True, self.players_turn, self.user, self.opponent, self.player_training_data
+        return None
+        #return self.game_over, self.players_turn, self.user, self.opponent, None
