@@ -91,7 +91,7 @@ class Main:
         ai_1_model = Model('ai_1', self.X, self.Y, self.keep_probability)
         model = Model('ai_2', self.X, self.Y, self.keep_probability)
         train = True
-        players_turn = True
+        #players_turn = True
         player_goes_first = True
         saver = tf.train.Saver()
 
@@ -126,7 +126,7 @@ class Main:
                         #Predict opponent's action
                         data = self.get_data_for_prediction(game.user, game.opponent)
                         #print('opponents\'s view: {}'.format(data))
-                        predicted_actions = sess.run(model.prediction, { self.X: data })[0]
+                        predicted_actions = sess.run(model.prediction, { self.X: data, self.keep_probability: 1.0 })[0]
                         #predicted_actions = sess.run(tf.nn.sigmoid(predicted_actions))
                         predicted_action = np.argmax(predicted_actions) + 1
 
@@ -276,7 +276,7 @@ class Main:
                                 if unique_decisions_count[i, 0][:temp_size] == current_moves:
                                     #temp = int(unique_decisions_count[i, 1])
                                     #unique_decisions_count[i, 1] = temp = temp + 1
-                                    if int(unique_decisions_count[i,1]) > 1:
+                                    if int(unique_decisions_count[i,1]) > 10:
                                         use_current_choice = randint(0, int(unique_decisions_count[i,1]))
                                         if use_current_choice != 0:
                                             choice = randint(1, 4)
@@ -304,7 +304,7 @@ class Main:
                         game.game_over = True
                         add_data = False
                         #train = False
-                        print("hit max turns")
+                        #print("hit max turns")
 
                     #if ai 2 is winning too much
                     if ai_2_wins > ai_1_wins + 2:
@@ -353,7 +353,7 @@ class Main:
                                     all_ready_in_unique_decisions_count = True
 
                         if all_ready_in_unique_decisions_count is False:
-                            print(current_moves)
+                            #print(current_moves)
                             temp_new_moves = np.array([[current_moves, '1']])
                             unique_decisions_count = np.concatenate((unique_decisions_count, temp_new_moves), axis=0)
 
@@ -371,20 +371,20 @@ class Main:
                     for _ in range(1):
                         
                         training_data_size = np.size(self.training_data_x, 0)
-                        # random_range = np.arange(training_data_size)
-                        # np.random.shuffle(random_range)
+                        random_range = np.arange(training_data_size)
+                        np.random.shuffle(random_range)
                         ai_1_loss = 0
                         ai_2_loss = 0
 
                         #Train 'positive' data for loser
                         for i in range(training_data_size):
-                            #random_index = random_range[i]
+                            random_index = random_range[i]
                             if did_player_1_win:
                                 _, ai_1_loss = sess.run(ai_1_model.optimize, 
-                                { self.X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[i],(-1, 4)), self.keep_probability: 0.3})
+                                { self.X: np.reshape(self.training_data_x[random_index], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[random_index],(-1, 4)), self.keep_probability: 1.0})
                             else:
                                 _, ai_2_loss = sess.run(ai_2_model.optimize, 
-                                { self.X: np.reshape(self.training_data_x[i], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[i],(-1, 4)), self.keep_probability: 1.0})
+                                { self.X: np.reshape(self.training_data_x[random_index], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_y[random_index],(-1, 4)), self.keep_probability: 1.0})
                         
                         # training_data_size = np.size(self.negative_training_data_x, 0)
                         # #Train 'negative' data for loser
@@ -415,8 +415,8 @@ class Main:
                     
                     print('AI_1 wins {} : AI_2 wins {}'.format(ai_1_wins, ai_2_wins))
                 #clear training data
-                self.training_data_x = np.empty((0, self.feature_length))
-                self.training_data_y = np.empty((0, self.label_length))
+                #self.training_data_x = np.empty((0, self.feature_length))
+                #self.training_data_y = np.empty((0, self.label_length))
 
                 self.negative_training_data_x = np.empty((0, self.feature_length))
                 self.negative_training_data_y = np.empty((0, self.label_length))
@@ -468,5 +468,5 @@ class Main:
 #http://localhost:6006/
 
 #Main().start_user_vs_ai(True)
-Main().start_ai_vs_ai(False, 1000)
+Main().start_ai_vs_ai(False, 2000)
  
