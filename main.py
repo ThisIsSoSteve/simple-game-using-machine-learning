@@ -177,6 +177,12 @@ class Main:
         return 1 / (1 + np.exp(-x))
 
     def start_ai_vs_ai(self, restore, number_of_games):
+
+        unique_decisions_count = np.empty((0, 2))#[moves , count] #winning move only
+        ai_1_current_moves = ''
+        ai_2_current_moves = ''
+
+
         ai_1_model = Model('ai_1', self.X, self.Y, self.keep_probability)
         ai_2_model = Model('ai_2', self.X, self.Y, self.keep_probability)
 
@@ -249,6 +255,41 @@ class Main:
 
                         #choice = np.random.choice(choices, p=probabilities)   
                     
+                    if game.players_turn:
+                        ai_1_current_moves = ai_1_current_moves + str(choice)
+                    else:
+                        ai_2_current_moves = ai_2_current_moves + str(choice)
+
+
+                    if np.size(unique_decisions_count, 0) > 0:
+                        temp_size = 0
+                        current_moves = ''
+                        if game.players_turn:
+                            current_moves = ai_1_current_moves
+                            temp_size = len(ai_1_current_moves)
+                        else:
+                            current_moves = ai_2_current_moves
+                            temp_size = len(ai_2_current_moves)
+
+                        for i in range(np.size(unique_decisions_count, 0)):
+                            if temp_size > 0:
+                                if unique_decisions_count[i, 0][:temp_size] == current_moves:
+                                    #temp = int(unique_decisions_count[i, 1])
+                                    #unique_decisions_count[i, 1] = temp = temp + 1
+                                    if int(unique_decisions_count[i,1]) > 1:
+                                        use_current_choice = randint(0, int(unique_decisions_count[i,1]))
+                                        if use_current_choice != 0:
+                                            choice = randint(1, 4)
+                                            #print('random')#not hitting atm
+                                            #unique_decisions_count[i, 0] = unique_decisions_count[i, 0][:temp_size -1] + str(choice)
+                                            if game.players_turn:
+                                                ai_1_current_moves = ai_1_current_moves[:temp_size -1] + str(choice)
+                                            else:
+                                                ai_2_current_moves = ai_2_current_moves[:temp_size -1] + str(choice)
+
+                                            break
+
+
 
 
                     #Some reason tf.nn.softmax progressively slows the program to a crawl in about 20 games.
@@ -283,23 +324,48 @@ class Main:
                             #print('AI 1 is winning too much')
 
                     if game.game_over and add_data:
+
+
+                        current_moves = ''
+
                         #record winning data
                         if did_player_1_win:
                             self.add_ai_training_data(game.player_training_data.feature, game.player_training_data.label, True, True, False)
                             ai_1_wins += 1
+                            current_moves = ai_1_current_moves
                             
                             #self.add_ai_training_data(game.opponent_training_data.feature, game.opponent_training_data.label, False, True, True)
                         else:
                             self.add_ai_training_data(game.opponent_training_data.feature, game.opponent_training_data.label, True, False, False)
                             ai_2_wins += 1
+                            current_moves = ai_2_current_moves
                             
                             #self.add_ai_training_data(game.player_training_data.feature, game.player_training_data.label, False, False, True)
                             #self.add_training_data(game.player_training_data.feature, 1 - game.player_training_data.label, False)
                         
+
+                        all_ready_in_unique_decisions_count = False
+                        if np.size(unique_decisions_count, 0) > 0:
+                            for i in range(np.size(unique_decisions_count, 0)):
+                                if unique_decisions_count[i, 0] == current_moves:
+                                    temp = int(unique_decisions_count[i, 1])
+                                    unique_decisions_count[i, 1] = temp = temp + 1
+                                    all_ready_in_unique_decisions_count = True
+
+                        if all_ready_in_unique_decisions_count is False:
+                            print(current_moves)
+                            temp_new_moves = np.array([[current_moves, '1']])
+                            unique_decisions_count = np.concatenate((unique_decisions_count, temp_new_moves), axis=0)
+
+
+                        print('unique_decisions_count_size: {}'.format(np.size(unique_decisions_count, 0)))
+
+
                         number_of_games_played += 1
                         train = True
                     
-
+                ai_1_current_moves = ''
+                ai_2_current_moves = ''
                 #Train
                 if train and np.size(self.training_data_x, 0) > 0:
                     for _ in range(1):
