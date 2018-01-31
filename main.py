@@ -241,9 +241,10 @@ class Main:
                     # choices = np.arange(1, self.label_length + 1)
 
                     # choice = np.random.choice(choices, p=probabilities)   
-
+                    use_predicted = False
                     if (ai_1_wins > ai_2_wins and game.players_turn) or (ai_2_wins > ai_1_wins and game.players_turn  is False):
                         choice = np.argmax(predicted_actions) + 1
+                        use_predicted = True
                         #print('predicted')
                     else:
                         choice = randint(1,4)
@@ -261,7 +262,7 @@ class Main:
                         ai_2_current_moves = ai_2_current_moves + str(choice)
 
 
-                    if np.size(unique_decisions_count, 0) > 0:
+                    if use_predicted is False and np.size(unique_decisions_count, 0) > 10 :
                         temp_size = 0
                         current_moves = ''
                         if game.players_turn:
@@ -415,8 +416,8 @@ class Main:
                     
                     print('AI_1 wins {} : AI_2 wins {}'.format(ai_1_wins, ai_2_wins))
                 #clear training data
-                #self.training_data_x = np.empty((0, self.feature_length))
-                #self.training_data_y = np.empty((0, self.label_length))
+                self.training_data_x = np.empty((0, self.feature_length))
+                self.training_data_y = np.empty((0, self.label_length))
 
                 self.negative_training_data_x = np.empty((0, self.feature_length))
                 self.negative_training_data_y = np.empty((0, self.label_length))
@@ -468,5 +469,5 @@ class Main:
 #http://localhost:6006/
 
 #Main().start_user_vs_ai(True)
-Main().start_ai_vs_ai(False, 2000)
+Main().start_ai_vs_ai(False, 300)
  
