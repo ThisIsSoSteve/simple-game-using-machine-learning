@@ -5,16 +5,16 @@ from data import Data
 
 
 class Game:
-    def __init__(self, players_turn, feature_length, label_length):
+    def __init__(self, players_turn, state_length, q_value_length, action_length, reward_length):
         self.players_turn = players_turn
         self.game_over = False
-        self.user = Player('user')
-        self.opponent = Player('opponent')
+        self.agent_1 = Player('Agent 1')
+        self.agent_2 = Player('Agent 2')
 
         self.game_actions = Actions()
 
-        self.player_training_data = Data(feature_length, label_length)
-        self.opponent_training_data = Data(feature_length, label_length)
+        self.player_1_training_data = Data(state_length, q_value_length, action_length, reward_length, True)
+        self.player_2_training_data = Data(state_length, q_value_length, action_length, reward_length, False)
 
     def int_try_parse(self, value):
         try:
@@ -22,50 +22,84 @@ class Game:
         except ValueError:
             return value, False
 
-    def run(self, opponents_action):
-        if self.players_turn:
-            self.user.print_health()
-            self.game_actions.display_player_actions(self.user)
-            print('5. Exit')
-
-            user_input = input('Action (1-5)')
-            players_action, is_valid = self.int_try_parse(user_input)
-            os.system('cls')
-
-            if is_valid and players_action > 0 and players_action <= 5:
-                if players_action == 5:
-                    self.game_over = True
-                else:
-                    self.player_training_data.record(players_action, self.user, self.opponent, True)
-                    self.game_actions.perfrom(self.user, self.opponent, players_action)
-                    self.game_actions.display_player_chosen_action(self.user, players_action)
-                    
-                self.players_turn = False
-
+    def check_for_reward(self):
+        if self.agent_1.alive is False or self.agent_2.alive is False:
+            if self.agent_1.alive is False:
+                return 1
             else:
-                print('Please enter a valid option from 1-5')
-        else: #AI's turn
-            #print('opponent\'s choice number: {}'.format(opponents_action))
+                return 1
+        return 0
 
-            self.opponent_training_data.record(opponents_action, self.user, self.opponent, False)
+    def run_training(self, state, q_value, action):
 
-            self.opponent.print_health()
-            self.game_actions.display_ai_chosen_action(self.opponent, opponents_action)
-            self.game_actions.perfrom(self.opponent, self.user, opponents_action)
+        if self.players_turn: #Agents_1 turn
+            #self.agent_1.print_health()
+
+            self.game_actions.perfrom(self.agent_1, self.agent_2, action)
+
+            self.player_1_training_data.record(state, q_value, action, self.check_for_reward())
+                    
+            self.players_turn = False
+
+        else: #Agents_2 turn
+            #self.agent_2.print_health()
+            self.game_actions.perfrom(self.agent_2, self.agent_1, action)
+            self.player_2_training_data.record(state, q_value, action, self.check_for_reward())
 
             self.players_turn = True
 
-        if self.user.alive is False or self.opponent.alive is False:
-            os.system('cls')
+        if self.agent_1.alive is False or self.agent_2.alive is False:
+            #os.system('cls')
             self.game_over = True
 
-            if self.user.alive is False:
-                print('You lost')
+            if self.agent_1.alive is False:
+                #print('You lost')
                 return False
-                #return True, self.players_turn, self.user, self.opponent, self.opponent_training_data
             else:
-                print('You Won')
+                #print('You Won')
                 return True
-                #return True, self.players_turn, self.user, self.opponent, self.player_training_data
         return None
-        #return self.game_over, self.players_turn, self.user, self.opponent, None
+
+
+    #Justs plays the game no data recording
+    def run(self, opponents_action):
+            if self.players_turn:
+                self.agent_1.print_health()
+                self.game_actions.display_player_actions(self.agent_1)
+                print('5. Exit')
+
+                user_input = input('Action (1-5)')
+                players_action, is_valid = self.int_try_parse(user_input)
+                os.system('cls')
+
+                if is_valid and players_action > 0 and players_action <= 5:
+                    if players_action == 5:
+                        self.game_over = True
+                    else:
+                        self.game_actions.perfrom(self.agent_1, self.agent_2, players_action)
+                        self.game_actions.display_player_chosen_action(self.agent_1, players_action)
+                        
+                    self.players_turn = False
+
+                else:
+                    print('Please enter a valid option from 1-5')
+            else: #AI's turn
+
+                self.agent_2.print_health()
+                self.game_actions.display_ai_chosen_action(self.agent_2, opponents_action)
+                self.game_actions.perfrom(self.agent_2, self.agent_1, opponents_action)
+
+                self.players_turn = True
+
+            if self.agent_1.alive is False or self.agent_2.alive is False:
+                os.system('cls')
+                self.game_over = True
+
+                if self.agent_1.alive is False:
+                    print('You lost')
+                    return False
+                else:
+                    print('You Won')
+                    return True
+            return None
+            

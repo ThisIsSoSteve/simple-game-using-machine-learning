@@ -1,12 +1,17 @@
 import numpy as np
 
 class Data:
-    def __init__(self, feature_length, label_length):
-        self.feature_length = feature_length
-        self.label_length = label_length
-        self.feature = np.empty((0, feature_length)) #dtype=np.int16
-        self.label = np.empty((0, label_length))
+    def __init__(self, state_length, q_value_length, action_length, reward_length, is_player_1):
+        self.state_length = state_length
+        self.q_value_length = q_value_length
+        self.action_length = action_length
+        self.reward_length = reward_length
+        self.is_player_1 = is_player_1 #bool
 
+        self.states = np.empty((0, state_length)) #dtype=np.int16
+        self.q_values = np.empty((0, q_value_length))
+        self.actions = np.empty((0, action_length))
+        self.rewards = np.empty((0, reward_length))
     '''
     int action
     Player user
@@ -16,28 +21,28 @@ class Data:
     The is_user is there because we need to store the data from the AI's
     perspective.
     '''
-    def record(self, action, user, opponent, is_user):
-        new_feature = np.zeros((1, self.feature_length))
-        new_label = np.zeros((1, self.label_length))
+    def record(self, state, q_value, action, reward):
+        #new_feature = np.zeros((1, self.feature_length))
+        new_action = np.zeros((1, self.action_length))
+        new_action[0, action - 1] = 1
 
-        new_label[0, action - 1] = 1
+        # if self.is_player_1:
+        #     new_state = np.array([opponent.attack / opponent.max_attack,
+        #                 opponent.defence / opponent.max_defence,
+        #                 opponent.health / opponent.max_health,
+        #                 user.attack / user.max_attack,
+        #                 user.defence / user.max_defence,
+        #                 user.health / user.max_health])
+        # else:
+        #     new_state = np.array([user.attack / user.max_attack,
+        #                 user.defence / user.max_defence,
+        #                 user.health / user.max_health,
+        #                 opponent.attack / opponent.max_attack,
+        #                 opponent.defence / opponent.max_defence,
+        #                 opponent.health / opponent.max_health])
 
-        if is_user:
-            new_feature[0, 0] = opponent.attack / opponent.max_attack
-            new_feature[0, 1] = opponent.defence / opponent.max_defence
-            new_feature[0, 2] = opponent.health / opponent.max_health
-
-            new_feature[0, 3] = user.attack / user.max_attack
-            new_feature[0, 4] = user.defence / user.max_defence
-            new_feature[0, 5] = user.health / user.max_health
-        else:
-            new_feature[0, 0] = user.attack / user.max_attack
-            new_feature[0, 1] = user.defence / user.max_defence
-            new_feature[0, 2] = user.health / user.max_health
-
-            new_feature[0, 3] = opponent.attack / opponent.max_attack
-            new_feature[0, 4] = opponent.defence / opponent.max_defence
-            new_feature[0, 5] = opponent.health / opponent.max_health
-
-        self.feature = np.append(self.feature, new_feature, axis=0)
-        self.label = np.append(self.label, new_label, axis=0)
+        # new_state = np.reshape(new_state, (-1, self.state_length))
+        self.states = np.append(self.states, state, axis=0)
+        self.q_values = np.append(self.q_values, q_value, axis=0)
+        self.actions = np.append(self.actions, new_action, axis=0)
+        self.rewards = np.append(self.rewards, np.zeros((reward, self.reward_length)), axis=0)
