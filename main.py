@@ -30,6 +30,8 @@ class Main:
         self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
         self.training_data_reward = np.empty((0, 1))#rewards vector
 
+        self.reward_discount_factor = 0.97
+
         #self.test_training_data_x = np.empty((0, self.feature_length))
         #self.test_training_data_y = np.empty((0, self.label_length))
 
@@ -69,6 +71,21 @@ class Main:
 
         return np.reshape(new_state, (-1, self.feature_length))
 
+    def update_q_values(self, q_values, actions, rewards):
+        range_length = np.size(q_values, 0)
+
+        for i in range(range_length, 0, -1):
+            action_index = np.argmax(actions[i])
+            reward = rewards[i]
+
+            if reward == 1:
+                q_values[i, action_index] = reward
+            else:
+                q_values[i, action_index] = reward + self.reward_discount_factor * np.max(q_values[i + 1])
+
+        return q_values
+
+
     def start(self, restore):
         train = True
         saver = tf.train.Saver()
@@ -101,16 +118,16 @@ class Main:
                     elif game.game_over:
                         #record winning data
                         if did_player_win:
-                            #Todo: Update rewards
+                            game.player_1_training_data.q_values = self.update_q_values(game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
                             self.add_training_data(game.player_1_training_data.states, game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
                         else:
-                            #Todo: Update rewards
+                            game.player_2_training_data.q_values = self.update_q_values(game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
                             self.add_training_data(game.player_2_training_data.states, game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
 
 
                 #Train
                 if train:
-                    for _ in range(50):
+                    for _ in range(1):
                         
                         training_data_size = np.size(self.training_data_reward, 0)
                         random_range = np.arange(training_data_size)
