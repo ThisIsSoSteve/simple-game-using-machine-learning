@@ -26,23 +26,7 @@ class Data:
         new_action = np.zeros((1, self.action_length))
         new_action[0, action - 1] = 1
 
-        # if self.is_player_1:
-        #     new_state = np.array([opponent.attack / opponent.max_attack,
-        #                 opponent.defence / opponent.max_defence,
-        #                 opponent.health / opponent.max_health,
-        #                 user.attack / user.max_attack,
-        #                 user.defence / user.max_defence,
-        #                 user.health / user.max_health])
-        # else:
-        #     new_state = np.array([user.attack / user.max_attack,
-        #                 user.defence / user.max_defence,
-        #                 user.health / user.max_health,
-        #                 opponent.attack / opponent.max_attack,
-        #                 opponent.defence / opponent.max_defence,
-        #                 opponent.health / opponent.max_health])
-
-        # new_state = np.reshape(new_state, (-1, self.state_length))
         self.states = np.append(self.states, state, axis=0)
-        self.q_values = np.append(self.q_values, q_value, axis=0)
+        self.q_values = np.append(self.q_values, [q_value], axis=0)
         self.actions = np.append(self.actions, new_action, axis=0)
-        self.rewards = np.append(self.rewards, np.zeros((reward, self.reward_length)), axis=0)
+        self.rewards = np.append(self.rewards, np.array([[reward]]), axis=0)

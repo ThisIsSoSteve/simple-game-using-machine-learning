@@ -74,14 +74,14 @@ class Main:
     def update_q_values(self, q_values, actions, rewards):
         range_length = np.size(q_values, 0)
 
-        for i in range(range_length, 0, -1):
+        for i in range(range_length-1, 0, -1):
             action_index = np.argmax(actions[i])
             reward = rewards[i]
 
             if reward == 1:
-                q_values[i, action_index] = reward
+                q_values[i][action_index] = reward
             else:
-                q_values[i, action_index] = reward + self.reward_discount_factor * np.max(q_values[i + 1])
+                q_values[i][action_index] = reward + self.reward_discount_factor * np.max(q_values[i + 1])
 
         return q_values
 
@@ -89,6 +89,9 @@ class Main:
     def start(self, restore):
         train = True
         saver = tf.train.Saver()
+        
+        max_number_of_turns = 10
+        number_of_games = 0
 
         with tf.Session() as sess:
 
@@ -100,15 +103,17 @@ class Main:
             while train:
                 #New game
                 game = Game(True, self.feature_length, self.label_length, self.label_length, 1)
-   
+                number_of_turns = 0
                 while not game.game_over:
+                    
                     #Get current state of the game
                     state = self.get_state_for_prediction(game.agent_1, game.agent_2, game.players_turn)
                     #Predict q values
                     q_value = sess.run(self.model.prediction, { self.X: state })[0]
                     
                     #ToDo: implament random actions
-                    action = np.argmax(q_value) + 1
+                    action = np.random.randint(low=1, high=self.label_length+1)
+                    #action = np.argmax(q_value) + 1
 
                     #Play Game
                     did_player_win = game.run_training(state, q_value, action)
@@ -117,6 +122,7 @@ class Main:
                         train = False
                     elif game.game_over:
                         #record winning data
+                        number_of_games += 1
                         if did_player_win:
                             game.player_1_training_data.q_values = self.update_q_values(game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
                             self.add_training_data(game.player_1_training_data.states, game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
@@ -124,9 +130,14 @@ class Main:
                             game.player_2_training_data.q_values = self.update_q_values(game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
                             self.add_training_data(game.player_2_training_data.states, game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
 
-
+                    number_of_turns += 1
+                    
+                print(number_of_games)
+                if number_of_games == 10:
+                    print(self.training_data_q_values)
+                    break
                 #Train
-                if train:
+                if 1 == 2:# train:
                     for _ in range(1):
                         
                         training_data_size = np.size(self.training_data_reward, 0)
