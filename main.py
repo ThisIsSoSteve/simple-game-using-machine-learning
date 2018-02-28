@@ -85,6 +85,21 @@ class Main:
 
         return q_values
 
+    def get_epsilon_greedy(self, iteration):
+        #ToDo:Refactor 
+        start_value = 1.0
+        end_value = 0.1
+        max_intergrations = 4000#5e6
+        _coefficient = (end_value - start_value) / max_intergrations
+
+        if iteration < max_intergrations:
+            value = iteration * _coefficient + start_value
+        else:
+            value = end_value
+
+        return value
+
+
 
     def start(self, restore):
         train = True
@@ -111,9 +126,13 @@ class Main:
                     #Predict q values
                     q_value = sess.run(self.model.prediction, { self.X: state })[0]
                     
-                    #ToDo: implament random actions
-                    action = np.random.randint(low=1, high=self.label_length+1)
-                    #action = np.argmax(q_value) + 1
+                    #decide to use random action
+                    if np.random.random() < self.get_epsilon_greedy(self.global_step):
+                        #print("random action")
+                        action = np.random.randint(low=1, high=self.label_length+1)
+                    else:
+                        #print("action")
+                        action = np.argmax(q_value) + 1
 
                     #Play Game
                     did_player_win = game.run_training(state, q_value, action)
@@ -124,20 +143,21 @@ class Main:
                         #record winning data
                         number_of_games += 1
                         if did_player_win:
+                            #print('player 1 wins')
                             game.player_1_training_data.q_values = self.update_q_values(game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
                             self.add_training_data(game.player_1_training_data.states, game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
                         else:
+                            #print('player 2 wins')
                             game.player_2_training_data.q_values = self.update_q_values(game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
                             self.add_training_data(game.player_2_training_data.states, game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
 
                     number_of_turns += 1
                     
-                print(number_of_games)
-                if number_of_games == 10:
-                    print(self.training_data_q_values)
+                if number_of_games == 2000:
+                    #print(self.training_data_q_values)
                     break
                 #Train
-                if 1 == 2:# train:
+                if train:
                     for _ in range(1):
                         
                         training_data_size = np.size(self.training_data_reward, 0)
@@ -154,11 +174,15 @@ class Main:
                         self.cost_plot.data.append(loss)
                         self.accuracy_plot.data.append(current_accuracy)
 
-                    print('Saving...')
+                    #print('Saving...')
                     saver.save(sess, self.checkpoint)
 
                     print('Epoch {} - Loss {} - Accuracy {}'.format(self.global_step, loss, current_accuracy))
 
+                    self.training_data_states = np.empty((0, self.feature_length))#X or Features
+                    self.training_data_q_values = np.empty((0, self.label_length))#Y or label
+                    self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
+                    self.training_data_reward = np.empty((0, 1))#rewards vector
                     #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
                     
                     #Move out into class

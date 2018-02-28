@@ -8,10 +8,9 @@ class Game:
     def __init__(self, players_turn, state_length, q_value_length, action_length, reward_length):
         self.players_turn = players_turn
         self.game_over = False
-        
 
-        self.agent_1 = Player('Agent 1')
-        self.agent_2 = Player('Agent 2')
+        self.agent_1 = Player('Agent 1', False)
+        self.agent_2 = Player('Agent 2', False)
 
         self.game_actions = Actions()
 
