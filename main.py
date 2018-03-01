@@ -99,9 +99,38 @@ class Main:
 
         return value
 
+    def start_testing(self):
+        exit_game = False
+        saver = tf.train.Saver()
 
+        with tf.Session() as sess:
+            saver.restore(sess, self.checkpoint)
 
-    def start(self, restore):
+            while not exit_game:
+                game = Game(True, self.feature_length, self.label_length, self.label_length, 1)
+                game.agent_1.print_game_text = True
+                game.agent_2.print_game_text = True
+
+                while not game.game_over:
+                    
+                    action = 0
+                    if game.players_turn == False:
+                        #Get current state of the game
+                        state = self.get_state_for_prediction(game.agent_1, game.agent_2, game.players_turn)
+                        #Predict q values
+                        q_value = sess.run(self.model.prediction, { self.X: state })[0]
+
+                        action = np.argmax(q_value) + 1
+
+                    #Play Game
+                    did_player_win = game.run(action)
+
+                    if game.game_over and did_player_win == None:
+                        exit_game = True
+
+                        
+
+    def start_training(self, restore):
         train = True
         saver = tf.train.Saver()
         
@@ -202,4 +231,5 @@ class Main:
 
 #http://localhost:6006/
 
-Main().start(False)
+#Main().start_training(False)
+Main().start_testing()
