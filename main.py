@@ -89,7 +89,7 @@ class Main:
         #ToDo:Refactor 
         start_value = 1.0
         end_value = 0.1
-        max_intergrations = 4000#5e6
+        max_intergrations = 2000#5e6
         _coefficient = (end_value - start_value) / max_intergrations
 
         if iteration < max_intergrations:
@@ -101,13 +101,15 @@ class Main:
 
     def start_testing(self):
         exit_game = False
+        players_turn = True
         saver = tf.train.Saver()
 
         with tf.Session() as sess:
             saver.restore(sess, self.checkpoint)
 
             while not exit_game:
-                game = Game(True, self.feature_length, self.label_length, self.label_length, 1)
+                game = Game(players_turn, self.feature_length, self.label_length, self.label_length, 1)
+                players_turn = not players_turn
                 game.agent_1.print_game_text = True
                 game.agent_2.print_game_text = True
 
@@ -130,12 +132,14 @@ class Main:
 
                         
 
-    def start_training(self, restore):
-        train = True
+    def start_training(self, restore, max_iterations):
+        play = True
+        train = False
         saver = tf.train.Saver()
         
         max_number_of_turns = 10
         number_of_games = 0
+        players_turn = True
 
         with tf.Session() as sess:
 
@@ -144,10 +148,12 @@ class Main:
             else:
                 sess.run(tf.global_variables_initializer())
 
-            while train:
+            while play:
                 #New game
-                game = Game(True, self.feature_length, self.label_length, self.label_length, 1)
+                game = Game(players_turn, self.feature_length, self.label_length, self.label_length, 1)
+                
                 number_of_turns = 0
+                train = False
                 while not game.game_over:
                     
                     #Get current state of the game
@@ -167,9 +173,11 @@ class Main:
                     did_player_win = game.run_training(state, q_value, action)
 
                     if game.game_over and did_player_win == None:
-                        train = False
+                        play = False
                     elif game.game_over:
                         #record winning data
+                        players_turn = not players_turn
+                        train = True
                         number_of_games += 1
                         if did_player_win:
                             #print('player 1 wins')
@@ -180,9 +188,11 @@ class Main:
                             game.player_2_training_data.q_values = self.update_q_values(game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
                             self.add_training_data(game.player_2_training_data.states, game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
 
+                    if number_of_turns > max_number_of_turns:
+                        break
                     number_of_turns += 1
                     
-                if number_of_games == 2000:
+                if number_of_games == max_iterations:
                     #print(self.training_data_q_values)
                     break
                 #Train
@@ -231,5 +241,5 @@ class Main:
 
 #http://localhost:6006/
 
-#Main().start_training(False)
+#Main().start_training(False, 1000)
 Main().start_testing()

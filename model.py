@@ -20,13 +20,13 @@ class Model:
         layer_1_size = 30
 
         with tf.variable_scope('layer_1') as scope:
-            layer_1_weights = tf.Variable(tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.0001, maxval = 0.001), name="weights")
+            layer_1_weights = tf.Variable(tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.001, maxval = 0.01), name="weights")
             #layer_1_weights = tf.Variable(tf.constant(0.0, shape=[feature_size, layer_1_size]), name="weights")
             layer_1_biases = tf.Variable(tf.constant(0.0, shape = [layer_1_size]), name = "biases")
             layer_1 = tf.nn.relu(tf.matmul(self.feature, layer_1_weights) + layer_1_biases)
 
         with tf.variable_scope('layer_output') as scope:
-            output_weights = tf.Variable(tf.random_uniform(shape = [layer_1_size, label_size], minval = 0.0001, maxval = 0.001), name = "weights")
+            output_weights = tf.Variable(tf.random_uniform(shape = [layer_1_size, label_size], minval = 0.001, maxval = 0.01), name = "weights")
             output_biases = tf.Variable(tf.constant(0.0, shape = [label_size]), name = "biases")
             output = tf.matmul(layer_1, output_weights) + output_biases
 
