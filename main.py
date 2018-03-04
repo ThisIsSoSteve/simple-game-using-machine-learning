@@ -30,26 +30,29 @@ class Main:
         self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
         self.training_data_reward = np.empty((0, 1))#rewards vector
 
-        self.reward_discount_factor = 0.97
+        self.reward_discount_factor = 0.80
 
-        #self.test_training_data_x = np.empty((0, self.feature_length))
-        #self.test_training_data_y = np.empty((0, self.label_length))
+        self.agent_1_wins = 0
+        self.agent_2_wins = 0
 
+        self.test_training_data_x = np.empty((0, self.feature_length))
+        self.test_training_data_y = np.empty((0, self.label_length))
 
+        self.strategies = ''
         #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
     # def add_training_data(self, features, labels):
     #     self.training_data_x = np.concatenate((self.training_data_x, features), axis=0)
     #     self.training_data_y = np.concatenate((self.training_data_y, labels), axis=0)
-    def add_training_data(self, states, q_values, actions, rewards):
+    def add_training_data(self, states, q_values, actions, rewards, add_to_test_data):
         self.training_data_states = np.concatenate((self.training_data_states, states), axis=0)#features
         self.training_data_q_values = np.concatenate((self.training_data_q_values, q_values), axis=0)#labels
         self.training_data_actions = np.concatenate((self.training_data_actions, actions), axis=0)
         self.training_data_reward = np.concatenate((self.training_data_reward, rewards), axis=0)
 
-        # if add_to_test_data:
-        #     self.test_training_data_x = np.concatenate((self.test_training_data_x, features), axis=0)
-        #     self.test_training_data_y = np.concatenate((self.test_training_data_y, labels), axis=0)
+        if add_to_test_data:
+            self.test_training_data_x = np.concatenate((self.test_training_data_x, states), axis=0)
+            self.test_training_data_y = np.concatenate((self.test_training_data_y, q_values), axis=0)
 
 
 
@@ -82,14 +85,14 @@ class Main:
                 q_values[i][action_index] = reward
             else:
                 q_values[i][action_index] = reward + self.reward_discount_factor * np.max(q_values[i + 1])
-
+            #print(q_values[i])
         return q_values
 
     def get_epsilon_greedy(self, iteration):
         #ToDo:Refactor 
         start_value = 1.0
         end_value = 0.1
-        max_intergrations = 2000#5e6
+        max_intergrations = 300#5e6
         _coefficient = (end_value - start_value) / max_intergrations
 
         if iteration < max_intergrations:
@@ -99,29 +102,39 @@ class Main:
 
         return value
 
+    def log_winning_actions(self, actions):
+        size = np.size(actions, 0)
+        strategy = ""
+        for i in range(size):
+            strategy = strategy + str(np.argmax(actions[i]))
+
+        self.strategies = self.strategies + strategy + '\n'
+
+
     def start_testing(self):
         exit_game = False
-        players_turn = True
+        players_turn_first = True
         saver = tf.train.Saver()
 
         with tf.Session() as sess:
             saver.restore(sess, self.checkpoint)
+            #sess.run(tf.global_variables_initializer())
 
             while not exit_game:
-                game = Game(players_turn, self.feature_length, self.label_length, self.label_length, 1)
-                players_turn = not players_turn
+                game = Game(players_turn_first, self.feature_length, self.label_length, self.label_length, 1)
+                players_turn_first = not players_turn_first
                 game.agent_1.print_game_text = True
                 game.agent_2.print_game_text = True
 
                 while not game.game_over:
                     
-                    action = 0
+                    action = 4
                     if game.players_turn == False:
                         #Get current state of the game
-                        state = self.get_state_for_prediction(game.agent_1, game.agent_2, game.players_turn)
+                        state = self.get_state_for_prediction(game.agent_1, game.agent_2, False)
                         #Predict q values
                         q_value = sess.run(self.model.prediction, { self.X: state })[0]
-
+                        print(q_value)
                         action = np.argmax(q_value) + 1
 
                     #Play Game
@@ -130,8 +143,6 @@ class Main:
                     if game.game_over and did_player_win == None:
                         exit_game = True
 
-                        
-
     def start_training(self, restore, max_iterations):
         play = True
         train = False
@@ -139,7 +150,8 @@ class Main:
         
         max_number_of_turns = 10
         number_of_games = 0
-        players_turn = True
+        players_turn_first = True
+        switch = False
 
         with tf.Session() as sess:
 
@@ -150,7 +162,7 @@ class Main:
 
             while play:
                 #New game
-                game = Game(players_turn, self.feature_length, self.label_length, self.label_length, 1)
+                game = Game(players_turn_first, self.feature_length, self.label_length, self.label_length, 1)
                 
                 number_of_turns = 0
                 train = False
@@ -161,8 +173,21 @@ class Main:
                     #Predict q values
                     q_value = sess.run(self.model.prediction, { self.X: state })[0]
                     
+                    choose_random = True
+                    if switch == False:
+                        if game.players_turn:
+                            epsilon_greedy = self.get_epsilon_greedy(self.global_step % 10)
+                        else:
+                            choose_random = False
+
+                    if switch:
+                        if game.players_turn == False:
+                            epsilon_greedy = self.get_epsilon_greedy(self.global_step % 10)
+                        else:
+                            choose_random = False
+
                     #decide to use random action
-                    if np.random.random() < self.get_epsilon_greedy(self.global_step):
+                    if choose_random and np.random.random() < epsilon_greedy:#self.get_epsilon_greedy(self.global_step % 100):
                         #print("random action")
                         action = np.random.randint(low=1, high=self.label_length+1)
                     else:
@@ -176,17 +201,31 @@ class Main:
                         play = False
                     elif game.game_over:
                         #record winning data
-                        players_turn = not players_turn
-                        train = True
-                        number_of_games += 1
-                        if did_player_win:
-                            #print('player 1 wins')
-                            game.player_1_training_data.q_values = self.update_q_values(game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
-                            self.add_training_data(game.player_1_training_data.states, game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
+
+                        if self.agent_1_wins % 10 == 0 and self.agent_2_wins < self.agent_1_wins:
+                            switch = True
                         else:
+                            switch = False
+
+                        if did_player_win and switch == False:
+                            #print('Switch {}'.format(switch))
+                            train = True
+                            number_of_games += 1
+                            #print('player 1 wins')
+                            self.agent_1_wins += 1
+                            self.log_winning_actions(game.player_1_training_data.actions)
+                            game.player_1_training_data.q_values = self.update_q_values(game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
+                            self.add_training_data(game.player_1_training_data.states, game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards, True)
+                        
+                        if did_player_win == False and switch:
+                            #print('Switch {}'.format(switch))
+                            train = True
+                            number_of_games += 1
                             #print('player 2 wins')
+                            self.agent_2_wins += 1
+                            self.log_winning_actions(game.player_2_training_data.actions)
                             game.player_2_training_data.q_values = self.update_q_values(game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
-                            self.add_training_data(game.player_2_training_data.states, game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
+                            self.add_training_data(game.player_2_training_data.states, game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards, True)
 
                     if number_of_turns > max_number_of_turns:
                         break
@@ -209,14 +248,14 @@ class Main:
                         #_, loss = sess.run(model.optimize, { X: self.training_data_x, Y: self.training_data_y })
                         self.global_step += 1
 
-                        current_accuracy = sess.run(self.model.error, { self.X: self.training_data_states, self.Y: self.training_data_q_values })
+                        current_accuracy = sess.run(self.model.error, { self.X: self.test_training_data_x, self.Y: self.test_training_data_y })
                         self.cost_plot.data.append(loss)
                         self.accuracy_plot.data.append(current_accuracy)
 
                     #print('Saving...')
                     saver.save(sess, self.checkpoint)
 
-                    print('Epoch {} - Loss {} - Accuracy {}'.format(self.global_step, loss, current_accuracy))
+                    print('Epoch {} - Loss {} - Accuracy {} - A1W={} A2W={}'.format(self.global_step, loss, current_accuracy, self.agent_1_wins, self.agent_2_wins))
 
                     self.training_data_states = np.empty((0, self.feature_length))#X or Features
                     self.training_data_q_values = np.empty((0, self.label_length))#Y or label
@@ -235,11 +274,14 @@ class Main:
 
                     self.cost_plot.save_sub_plot(self.accuracy_plot,
                     "data/charts/{} and {}.png".format(self.cost_plot.y_label, self.accuracy_plot.y_label))
+
+            with open('data/charts/strategies.txt', 'w') as file:
+                file.write(self.strategies)
 #using tensorboard
 #E:
 #tensorboard --logdir=Logs
 
 #http://localhost:6006/
 
-#Main().start_training(False, 1000)
+#Main().start_training(True, 1000)
 Main().start_testing()

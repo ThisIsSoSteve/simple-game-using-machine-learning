@@ -6,6 +6,7 @@ class Plot:
         self.data = data
         self.x_label = x_label
         self.y_label = y_label
+        #self.log_y_scale
         
     def show(self):
         plt.plot(self.data)
@@ -34,13 +35,16 @@ class Plot:
         plt.subplot(211)
         plt.ylabel(self.y_label)
         plt.xlabel(self.x_label)
+        plt.yscale('log')
         plt.plot(self.data)
+        
         
         plt.subplot(212)
         plt.ylabel(subplot.y_label)
         plt.xlabel(subplot.x_label)
+        plt.yscale('linear')
         plt.plot(subplot.data)
 
         plt.subplots_adjust(hspace= 0.35)
-        plt.savefig(savefile, dpi=64)
+        plt.savefig(savefile, dpi=128)
         plt.close()

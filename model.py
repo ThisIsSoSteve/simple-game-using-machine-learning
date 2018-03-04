@@ -34,13 +34,13 @@ class Model:
 
     @lazy_property
     def optimize(self):
-        learning_rate = 0.01
+        learning_rate = 0.1
         squared_error = tf.square(self.prediction - self.label)
         sum_squared_error = tf.reduce_sum(squared_error, axis=1)
         cost = tf.reduce_mean(sum_squared_error)
         #cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.prediction, labels=self.label))
-        #return tf.train.AdamOptimizer(learning_rate = learning_rate).minimize(cost), cost
-        return tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(cost), cost
+        return tf.train.AdamOptimizer(learning_rate = learning_rate).minimize(cost), cost
+        #return tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(cost), cost
 
     @lazy_property
     def error(self):
