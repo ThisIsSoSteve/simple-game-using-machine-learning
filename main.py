@@ -102,6 +102,7 @@ class Main:
 
         return value
 
+    #move to stats class
     def log_winning_actions(self, actions):
         size = np.size(actions, 0)
         strategy = ""
@@ -236,6 +237,8 @@ class Main:
                     break
                 #Train
                 if train:
+                    
+                    #NOTE change to train once ai has won 10 times
                     for _ in range(1):
                         
                         training_data_size = np.size(self.training_data_reward, 0)
