@@ -8,10 +8,11 @@ from model import Model
 from plot import Plot
 from game import Game
 
+
 #import matplotlib.pyplot as plt
 
 class Main:
-    def __init__(self):
+    def __init__(self, train):
         self.feature_length = 6
         self.label_length = 4
 
@@ -39,6 +40,14 @@ class Main:
         self.test_training_data_y = np.empty((0, self.label_length))
 
         self.strategies = ''
+
+        fname = 'data/charts/record_everything.txt'
+
+        if(train and os.path.isfile(fname)):
+            os.remove(fname)
+            with open(fname,'a') as file:
+                file.write('')
+
         #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
     # def add_training_data(self, features, labels):
@@ -111,6 +120,42 @@ class Main:
 
         self.strategies = self.strategies + strategy + '\n'
 
+    def log_everything(self, agent1_data, agent2_data, game_number, did_agent_1_won):
+        agent1_data_size = np.size(agent1_data.states, 0)
+        agent2_data_size = np.size(agent2_data.states, 0)
+        turn_number = 0
+        record = ''
+
+        game_number_string = str(game_number)
+
+        record = '\nGame #{}'.format(game_number_string)
+
+        for i in range(agent1_data_size):
+
+            if i <= agent1_data_size - 1:
+                state = agent1_data.states[i]
+                qvalues = agent1_data.q_values[i]
+                action = agent1_data.actions[i]
+
+                record += '\n\t\tAgent 1\'s Turn #{}\n\t\t\tState {}\n\t\t\tQvalues {}\n\t\t\tAction {}'.format(str(turn_number), state, qvalues, str(action))
+                turn_number +=1
+
+            if i <= agent2_data_size - 1:
+                state = agent2_data.states[i]
+                qvalues = agent2_data.q_values[i]
+                action = agent2_data.actions[i]
+
+                record += '\n\t\tAgent 2\'s Turn #{}\n\t\t\tState {}\n\t\t\tQvalues {}\n\t\t\tAction {}'.format(str(turn_number), state, qvalues, str(action))
+                turn_number +=1
+
+        if did_agent_1_won:
+            record += '\n\t Agent 1 Won'
+        else:
+            record += '\n\t Agent 2 Won'
+
+        with open('data/charts/record_everything.txt','a') as file:
+            file.write(record)
+
 
     def start_testing(self):
         exit_game = False
@@ -132,7 +177,7 @@ class Main:
                     action = 4
                     if game.players_turn == False:
                         #Get current state of the game
-                        state = self.get_state_for_prediction(game.agent_1, game.agent_2, False)
+                        state = self.get_state_for_prediction(game.agent_1, game.agent_2, players_turn_first)
                         #Predict q values
                         q_value = sess.run(self.model.prediction, { self.X: state })[0]
                         print(q_value)
@@ -214,7 +259,8 @@ class Main:
                             number_of_games += 1
                             #print('player 1 wins')
                             self.agent_1_wins += 1
-                            self.log_winning_actions(game.player_1_training_data.actions)
+                            self.log_everything(game.player_1_training_data, game.player_2_training_data, number_of_games, True)
+                            #self.log_winning_actions(game.player_1_training_data.actions)
                             game.player_1_training_data.q_values = self.update_q_values(game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
                             self.add_training_data(game.player_1_training_data.states, game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards, True)
                         
@@ -224,7 +270,8 @@ class Main:
                             number_of_games += 1
                             #print('player 2 wins')
                             self.agent_2_wins += 1
-                            self.log_winning_actions(game.player_2_training_data.actions)
+                            self.log_everything(game.player_1_training_data, game.player_2_training_data, number_of_games, False)
+                            #self.log_winning_actions(game.player_2_training_data.actions)
                             game.player_2_training_data.q_values = self.update_q_values(game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
                             self.add_training_data(game.player_2_training_data.states, game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards, True)
 
@@ -264,6 +311,12 @@ class Main:
                     self.training_data_q_values = np.empty((0, self.label_length))#Y or label
                     self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
                     self.training_data_reward = np.empty((0, 1))#rewards vector
+
+                    
+
+
+
+
                     #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
                     
                     #Move out into class
@@ -278,13 +331,13 @@ class Main:
                     self.cost_plot.save_sub_plot(self.accuracy_plot,
                     "data/charts/{} and {}.png".format(self.cost_plot.y_label, self.accuracy_plot.y_label))
 
-            with open('data/charts/strategies.txt', 'w') as file:
-                file.write(self.strategies)
+            # with open('data/charts/strategies.txt', 'w') as file:
+            #     file.write(self.strategies)
 #using tensorboard
 #E:
 #tensorboard --logdir=Logs
 
 #http://localhost:6006/
 
-#Main().start_training(True, 1000)
-Main().start_testing()
+Main(True).start_training(False, 20)
+#Main(False).start_testing()
