@@ -63,8 +63,6 @@ class Main:
             self.test_training_data_x = np.concatenate((self.test_training_data_x, states), axis=0)
             self.test_training_data_y = np.concatenate((self.test_training_data_y, q_values), axis=0)
 
-
-
     def get_state_for_prediction(self, user, opponent, is_player_1):
         if is_player_1:
             new_state = np.array([opponent.attack / opponent.max_attack,
@@ -101,7 +99,7 @@ class Main:
         #ToDo:Refactor 
         start_value = 1.0
         end_value = 0.1
-        max_intergrations = 300#5e6
+        max_intergrations = 100#5e6
         _coefficient = (end_value - start_value) / max_intergrations
 
         if iteration < max_intergrations:
@@ -156,7 +154,6 @@ class Main:
         with open('data/charts/record_everything.txt','a') as file:
             file.write(record)
 
-
     def start_testing(self):
         exit_game = False
         players_turn_first = True
@@ -177,7 +174,7 @@ class Main:
                     action = 4
                     if game.players_turn == False:
                         #Get current state of the game
-                        state = self.get_state_for_prediction(game.agent_1, game.agent_2, players_turn_first)
+                        state = self.get_state_for_prediction(game.agent_1, game.agent_2, True)
                         #Predict q values
                         q_value = sess.run(self.model.prediction, { self.X: state })[0]
                         print(q_value)
@@ -194,10 +191,12 @@ class Main:
         train = False
         saver = tf.train.Saver()
         
-        max_number_of_turns = 10
+        max_number_of_turns = 12
         number_of_games = 0
         players_turn_first = True
-        switch = False
+        force_agent_1_to_lose = False
+        number_of_forced_wins = 10
+        #self.global_step = 400
 
         with tf.Session() as sess:
 
@@ -220,13 +219,13 @@ class Main:
                     q_value = sess.run(self.model.prediction, { self.X: state })[0]
                     
                     choose_random = True
-                    if switch == False:
+                    if force_agent_1_to_lose == False:
                         if game.players_turn:
                             epsilon_greedy = self.get_epsilon_greedy(self.global_step % 10)
                         else:
                             choose_random = False
 
-                    if switch:
+                    if force_agent_1_to_lose:
                         if game.players_turn == False:
                             epsilon_greedy = self.get_epsilon_greedy(self.global_step % 10)
                         else:
@@ -248,14 +247,15 @@ class Main:
                     elif game.game_over:
                         #record winning data
 
-                        if self.agent_1_wins % 10 == 0 and self.agent_2_wins < self.agent_1_wins:
-                            switch = True
+                        #decide who we want to win
+                        if self.agent_1_wins % number_of_forced_wins == 0 and self.agent_2_wins < self.agent_1_wins:
+                            force_agent_1_to_lose = True
                         else:
-                            switch = False
+                            force_agent_1_to_lose = False
 
-                        if did_player_win and switch == False:
-                            #print('Switch {}'.format(switch))
-                            train = True
+                        if did_player_win and force_agent_1_to_lose == False:
+
+                            #train = True
                             number_of_games += 1
                             #print('player 1 wins')
                             self.agent_1_wins += 1
@@ -264,9 +264,8 @@ class Main:
                             game.player_1_training_data.q_values = self.update_q_values(game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
                             self.add_training_data(game.player_1_training_data.states, game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards, True)
                         
-                        if did_player_win == False and switch:
-                            #print('Switch {}'.format(switch))
-                            train = True
+                        if did_player_win == False and force_agent_1_to_lose:
+                            #train = True
                             number_of_games += 1
                             #print('player 2 wins')
                             self.agent_2_wins += 1
@@ -278,10 +277,13 @@ class Main:
                     if number_of_turns > max_number_of_turns:
                         break
                     number_of_turns += 1
-                    
-                if number_of_games == max_iterations:
-                    #print(self.training_data_q_values)
-                    break
+                
+                #we only train if we have correct number of wins in the training data
+                if(np.size(self.training_data_reward, 0) > 1 and number_of_games % number_of_forced_wins == 0 ):
+                    train = True
+
+                
+
                 #Train
                 if train:
                     
@@ -312,11 +314,6 @@ class Main:
                     self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
                     self.training_data_reward = np.empty((0, 1))#rewards vector
 
-                    
-
-
-
-
                     #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
                     
                     #Move out into class
@@ -331,6 +328,8 @@ class Main:
                     self.cost_plot.save_sub_plot(self.accuracy_plot,
                     "data/charts/{} and {}.png".format(self.cost_plot.y_label, self.accuracy_plot.y_label))
 
+                if number_of_games == max_iterations:
+                    break
             # with open('data/charts/strategies.txt', 'w') as file:
             #     file.write(self.strategies)
 #using tensorboard
@@ -339,5 +338,5 @@ class Main:
 
 #http://localhost:6006/
 
-Main(True).start_training(False, 20)
+Main(True).start_training(True, 800)
 #Main(False).start_testing()
