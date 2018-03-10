@@ -191,7 +191,7 @@ class Main:
         train = False
         saver = tf.train.Saver()
         
-        max_number_of_turns = 12
+        max_number_of_turns = 10
         number_of_games = 0
         players_turn_first = True
         force_agent_1_to_lose = False
@@ -338,5 +338,5 @@ class Main:
 
 #http://localhost:6006/
 
-Main(True).start_training(True, 800)
-#Main(False).start_testing()
+#Main(True).start_training(False, 2000)
+Main(False).start_testing()
