@@ -209,7 +209,7 @@ class Main:
                 #New game
                 game = Game(players_turn_first, self.feature_length, self.label_length, self.label_length, 1)
                 
-                number_of_turns = 0
+                number_of_turns = 1
                 train = False
                 while not game.game_over:
                     
@@ -274,7 +274,7 @@ class Main:
                             game.player_2_training_data.q_values = self.update_q_values(game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
                             self.add_training_data(game.player_2_training_data.states, game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards, True)
 
-                    if number_of_turns > max_number_of_turns:
+                    if number_of_turns >= max_number_of_turns:
                         break
                     number_of_turns += 1
                 
