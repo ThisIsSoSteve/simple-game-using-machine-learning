@@ -13,7 +13,7 @@ from game import Game
 
 class Main:
     def __init__(self, train):
-        self.feature_length = 6
+        self.feature_length = 7
         self.label_length = 4
 
         self.cost_plot = Plot([], 'Step', 'Cost')
@@ -63,21 +63,23 @@ class Main:
             self.test_training_data_x = np.concatenate((self.test_training_data_x, states), axis=0)
             self.test_training_data_y = np.concatenate((self.test_training_data_y, q_values), axis=0)
 
-    def get_state_for_prediction(self, user, opponent, is_player_1):
+    def get_state_for_prediction(self, user, opponent, is_player_1, current_turn):
         if is_player_1:
             new_state = np.array([opponent.attack / opponent.max_attack,
                         opponent.defence / opponent.max_defence,
                         opponent.health / opponent.max_health,
                         user.attack / user.max_attack,
                         user.defence / user.max_defence,
-                        user.health / user.max_health])
+                        user.health / user.max_health,
+                        current_turn / 12])
         else:
             new_state = np.array([user.attack / user.max_attack,
                         user.defence / user.max_defence,
                         user.health / user.max_health,
                         opponent.attack / opponent.max_attack,
                         opponent.defence / opponent.max_defence,
-                        opponent.health / opponent.max_health])
+                        opponent.health / opponent.max_health,
+                        current_turn / 12])
 
         return np.reshape(new_state, (-1, self.feature_length))
 
@@ -131,7 +133,7 @@ class Main:
         for i in range(agent1_data_size):
 
             if i <= agent1_data_size - 1:
-                state = agent1_data.states[i]
+                state = str(agent1_data.states[i]).replace('\n','')
                 qvalues = agent1_data.q_values[i]
                 action = agent1_data.actions[i]
 
@@ -168,13 +170,14 @@ class Main:
                 players_turn_first = not players_turn_first
                 game.agent_1.print_game_text = True
                 game.agent_2.print_game_text = True
+                number_of_turns = 0
 
                 while not game.game_over:
                     
                     action = 4
                     if game.players_turn == False:
                         #Get current state of the game
-                        state = self.get_state_for_prediction(game.agent_1, game.agent_2, True)
+                        state = self.get_state_for_prediction(game.agent_1, game.agent_2, players_turn_first, number_of_turns)
                         #Predict q values
                         q_value = sess.run(self.model.prediction, { self.X: state })[0]
                         print(q_value)
@@ -182,6 +185,8 @@ class Main:
 
                     #Play Game
                     did_player_win = game.run(action)
+
+                    number_of_turns += 1
 
                     if game.game_over and did_player_win == None:
                         exit_game = True
@@ -191,7 +196,7 @@ class Main:
         train = False
         saver = tf.train.Saver()
         
-        max_number_of_turns = 10
+        max_number_of_turns = 12
         number_of_games = 0
         players_turn_first = True
         force_agent_1_to_lose = False
@@ -209,12 +214,12 @@ class Main:
                 #New game
                 game = Game(players_turn_first, self.feature_length, self.label_length, self.label_length, 1)
                 
-                number_of_turns = 1
+                number_of_turns = 0
                 train = False
                 while not game.game_over:
                     
                     #Get current state of the game
-                    state = self.get_state_for_prediction(game.agent_1, game.agent_2, game.players_turn)
+                    state = self.get_state_for_prediction(game.agent_1, game.agent_2, game.players_turn, number_of_turns)
                     #Predict q values
                     q_value = sess.run(self.model.prediction, { self.X: state })[0]
                     
@@ -338,5 +343,5 @@ class Main:
 
 #http://localhost:6006/
 
-#Main(True).start_training(False, 2000)
-Main(False).start_testing()
+Main(True).start_training(False, 10000)
+#Main(False).start_testing()
