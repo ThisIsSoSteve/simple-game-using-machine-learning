@@ -141,7 +141,7 @@ class Main:
                 turn_number +=1
 
             if i <= agent2_data_size - 1:
-                state = agent2_data.states[i]
+                state = str(agent2_data.states[i]).replace('\n','')
                 qvalues = agent2_data.q_values[i]
                 action = agent2_data.actions[i]
 
@@ -237,7 +237,7 @@ class Main:
                             choose_random = False
 
                     #decide to use random action
-                    if choose_random and np.random.random() < epsilon_greedy:#self.get_epsilon_greedy(self.global_step % 100):
+                    if choose_random: #and np.random.random() < epsilon_greedy:#self.get_epsilon_greedy(self.global_step % 100):
                         #print("random action")
                         action = np.random.randint(low=1, high=self.label_length+1)
                     else:
@@ -291,10 +291,8 @@ class Main:
 
                 #Train
                 if train:
-                    
-                    #NOTE change to train once ai has won 10 times
                     for _ in range(1):
-                        
+                        avarage_loss = 0
                         training_data_size = np.size(self.training_data_reward, 0)
                         random_range = np.arange(training_data_size)
                         np.random.shuffle(random_range)
@@ -302,11 +300,12 @@ class Main:
                         for i in range(training_data_size):
                             random_index = random_range[i]
                             _, loss = sess.run(self.model.optimize, { self.X: np.reshape(self.training_data_states[random_index], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_q_values[random_index],(-1, 4))})
+                            avarage_loss += loss
                         #_, loss = sess.run(model.optimize, { X: self.training_data_x, Y: self.training_data_y })
                         self.global_step += 1
 
                         current_accuracy = sess.run(self.model.error, { self.X: self.test_training_data_x, self.Y: self.test_training_data_y })
-                        self.cost_plot.data.append(loss)
+                        self.cost_plot.data.append(avarage_loss / training_data_size)#save avarage loss
                         self.accuracy_plot.data.append(current_accuracy)
 
                     #print('Saving...')
@@ -343,5 +342,5 @@ class Main:
 
 #http://localhost:6006/
 
-Main(True).start_training(False, 10000)
-#Main(False).start_testing()
+#Main(True).start_training(False, 10000)
+Main(False).start_testing()
