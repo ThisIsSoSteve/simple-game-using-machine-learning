@@ -31,7 +31,7 @@ class Main:
         self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
         self.training_data_reward = np.empty((0, 1))#rewards vector
 
-        self.reward_discount_factor = 0.80
+        self.reward_discount_factor = 0.50
 
         self.agent_1_wins = 0
         self.agent_2_wins = 0
@@ -84,13 +84,13 @@ class Main:
         return np.reshape(new_state, (-1, self.feature_length))
 
     def update_q_values(self, q_values, actions, rewards):
-        range_length = np.size(q_values, 0)
+        range_length = np.size(q_values, 0) - 1
 
-        for i in range(range_length-1, 0, -1):
+        for i in range(range_length, 0, -1):
             action_index = np.argmax(actions[i])
             reward = rewards[i]
 
-            if reward == 1:
+            if i == range_length:
                 q_values[i][action_index] = reward
             else:
                 q_values[i][action_index] = reward + self.reward_discount_factor * np.max(q_values[i + 1])
@@ -112,13 +112,14 @@ class Main:
         return value
 
     #move to stats class
-    def log_winning_actions(self, actions):
+    def get_actions(self, actions):
         size = np.size(actions, 0)
         strategy = ""
         for i in range(size):
             strategy = strategy + str(np.argmax(actions[i]))
 
-        self.strategies = self.strategies + strategy + '\n'
+        #self.strategies = self.strategies + strategy + '\n'
+        return strategy
 
     def log_everything(self, agent1_data, agent2_data, game_number, did_agent_1_won):
         agent1_data_size = np.size(agent1_data.states, 0)
@@ -249,9 +250,10 @@ class Main:
 
                     if game.game_over and did_player_win == None:
                         play = False
+
                     elif game.game_over:
                         #record winning data
-
+                        #print('found game')
                         #decide who we want to win
                         if self.agent_1_wins % number_of_forced_wins == 0 and self.agent_2_wins < self.agent_1_wins:
                             force_agent_1_to_lose = True
