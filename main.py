@@ -31,7 +31,7 @@ class Main:
         self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
         self.training_data_reward = np.empty((0, 1))#rewards vector
 
-        self.reward_discount_factor = 0.50
+        self.reward_discount_factor = 0.60
 
         self.agent_1_wins = 0
         self.agent_2_wins = 0
@@ -203,6 +203,8 @@ class Main:
         force_agent_1_to_lose = False
         number_of_forced_wins = 10
         #self.global_step = 400
+        failed_games = 0
+        prev_training_number = 0
 
         with tf.Session() as sess:
 
@@ -217,6 +219,7 @@ class Main:
                 
                 number_of_turns = 0
                 train = False
+                
                 while not game.game_over:
                     
                     #Get current state of the game
@@ -248,10 +251,32 @@ class Main:
                     #Play Game
                     did_player_win = game.run_training(state, q_value, action)
 
-                    if game.game_over and did_player_win == None:
-                        play = False
-
+                    if did_player_win == None and number_of_turns >= max_number_of_turns:
+                        # if self.global_step > 100:
+                        #     print('failed game')
+                        failed_games += 1
+                        
+                        if failed_games > 1000 and np.size(self.training_data_reward, 0) == 0:
+                            print('Failed Games')
+                            print('force agent 1 to lose: {}'.format(str(force_agent_1_to_lose)))
+                            print('agent_1: {}'.format(self.get_actions(game.player_1_training_data.actions)))
+                            print('agent_2: {}'.format(self.get_actions(game.player_2_training_data.actions)))
+                            #play = False
+                            #break
+                            failed_games = 0
+                            #max_number_of_turns = np.random.randint(low=8, high=20)
+                            game.game_over = True
+                        else:
+                            if np.size(self.training_data_reward, 0) > prev_training_number:
+                                prev_training_number = np.size(self.training_data_reward, 0)
+                                
+                                # print('force agent 1 to lose: {}'.format(str(force_agent_1_to_lose)))
+                                # print('agent_1: {}'.format(self.get_actions(game.player_1_training_data.actions)))
+                                # print('agent_2: {}'.format(self.get_actions(game.player_2_training_data.actions)))
+                                
                     elif game.game_over:
+                        
+                        
                         #record winning data
                         #print('found game')
                         #decide who we want to win
@@ -261,7 +286,11 @@ class Main:
                             force_agent_1_to_lose = False
 
                         if did_player_win and force_agent_1_to_lose == False:
-
+                            failed_games = 0
+                            print('New training data')
+                            print('force agent 1 to lose: {}'.format(str(force_agent_1_to_lose)))
+                            print('agent_1: {}'.format(self.get_actions(game.player_1_training_data.actions)))
+                            print('agent_2: {}'.format(self.get_actions(game.player_2_training_data.actions)))
                             #train = True
                             number_of_games += 1
                             #print('player 1 wins')
@@ -270,8 +299,14 @@ class Main:
                             #self.log_winning_actions(game.player_1_training_data.actions)
                             game.player_1_training_data.q_values = self.update_q_values(game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
                             self.add_training_data(game.player_1_training_data.states, game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards, True)
-                        
+                            print(str(np.size(self.training_data_reward, 0)))
                         if did_player_win == False and force_agent_1_to_lose:
+                            failed_games = 0
+                            print('New training data')
+                            print('force agent 1 to lose: {}'.format(str(force_agent_1_to_lose)))
+                            print('agent_1: {}'.format(self.get_actions(game.player_1_training_data.actions)))
+                            print('agent_2: {}'.format(self.get_actions(game.player_2_training_data.actions)))
+                            
                             #train = True
                             number_of_games += 1
                             #print('player 2 wins')
@@ -280,7 +315,8 @@ class Main:
                             #self.log_winning_actions(game.player_2_training_data.actions)
                             game.player_2_training_data.q_values = self.update_q_values(game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
                             self.add_training_data(game.player_2_training_data.states, game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards, True)
-
+                            print(str(np.size(self.training_data_reward, 0)))
+                        
                     if number_of_turns >= max_number_of_turns:
                         break
                     number_of_turns += 1
@@ -293,6 +329,7 @@ class Main:
 
                 #Train
                 if train:
+                    prev_training_number = 0
                     for _ in range(1):
                         avarage_loss = 0
                         training_data_size = np.size(self.training_data_reward, 0)
