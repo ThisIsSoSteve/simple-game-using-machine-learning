@@ -19,23 +19,36 @@ class Model:
     def prediction(self):
         feature_size = 7
         label_size = 4
-        #lstm_hidden_size = 128
-        layer_1_size = 100
+        lstm_hidden_size = 128
+        layer_1_size = 64
 
-        #lstm_cell = tf.contrib.BasicLSTMCell(num_hidden, forget_bias=1.0)
+        #print(self.feature.get_shape())
+        batch_size = tf.shape(self.feature)[0]
+        lstm_features = tf.reshape(self.feature, [1,batch_size, feature_size])
+        #https://machinelearningmastery.com/reshape-input-data-long-short-term-memory-networks-keras/
+        lstm_cell =  tf.nn.rnn_cell.BasicLSTMCell(lstm_hidden_size, forget_bias=1.0)
+        outputs, states = tf.nn.dynamic_rnn(lstm_cell, lstm_features, dtype=tf.float32)
+        
+        # print(outputs.get_shape())
+        #reshaped_output = tf.reshape(outputs)
+        # with tf.variable_scope('layer_1') as scope:
+        #     layer_1_weights = tf.Variable(tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.0001, maxval = 0.001), name="weights")
+        #     #layer_1_weights = tf.Variable(tf.constant(0.0, shape=[feature_size, layer_1_size]), name="weights")
+        #     layer_1_biases = tf.Variable(tf.constant(0.0, shape = [layer_1_size]), name = "biases")
+        #     layer_1 = tf.nn.relu(tf.matmul(self.feature, layer_1_weights) + layer_1_biases)
 
         with tf.variable_scope('layer_1') as scope:
-            layer_1_weights = tf.Variable(tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.0001, maxval = 0.001), name="weights")
-            #layer_1_weights = tf.Variable(tf.constant(0.0, shape=[feature_size, layer_1_size]), name="weights")
-            layer_1_biases = tf.Variable(tf.constant(0.0, shape = [layer_1_size]), name = "biases")
-            layer_1 = tf.nn.relu(tf.matmul(self.feature, layer_1_weights) + layer_1_biases)
+             layer_1_weights = tf.Variable(tf.random_uniform(shape=[lstm_hidden_size, layer_1_size], minval = 0.0001, maxval = 0.001), name="weights")
+             layer_1_weights = tf.Variable(tf.constant(0.0, shape=[lstm_hidden_size, layer_1_size]), name="weights")
+             layer_1_biases = tf.Variable(tf.constant(0.0, shape = [layer_1_size]), name = "biases")
+             layer_1 = tf.nn.relu(tf.matmul(outputs[-1], layer_1_weights) + layer_1_biases)
 
-        dropout_layer_1 = tf.nn.dropout(layer_1, self.keep_probability)  
+        #dropout_layer_1 = tf.nn.dropout(layer_1, self.keep_probability)  
 
         with tf.variable_scope('layer_output') as scope:
             output_weights = tf.Variable(tf.random_uniform(shape = [layer_1_size, label_size], minval = 0.0001, maxval = 0.001), name = "weights")
             output_biases = tf.Variable(tf.constant(0.0, shape = [label_size]), name = "biases")
-            output = tf.matmul(dropout_layer_1, output_weights) + output_biases
+            output = tf.matmul(layer_1, output_weights) + output_biases
 
         return output
 

@@ -343,6 +343,17 @@ class Main:
                             #random_index = random_range[i]
                             #_, loss = sess.run(self.model.optimize, { self.X: np.reshape(self.training_data_states[random_index], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_q_values[random_index],(-1, 4))})
                             #avarage_loss += loss
+
+                        # training_data_size = np.size(self.training_data_states, 0)
+                        
+                        # print(self.training_data_states.shape)
+
+                        # x = self.training_data_states.reshape(1,training_data_size,7)
+                        
+                        # print(x.shape)
+                        # print(x)
+
+                        
                         _, loss = sess.run(self.model.optimize, { self.X: self.training_data_states, self.Y: self.training_data_q_values, self.keep_probability: 0.9 })
                         self.global_step += 1
 
@@ -385,5 +396,5 @@ class Main:
 
 #http://localhost:6006/
 
-#Main(True).start_training(False, 10000)
-Main(False).start_testing()
+Main(True).start_training(False, 10000)
+#Main(False).start_testing()
