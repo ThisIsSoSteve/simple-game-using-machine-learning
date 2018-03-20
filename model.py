@@ -6,9 +6,11 @@ using structure from https://danijar.com/structuring-your-tensorflow-models/
 '''
 class Model:
 
-    def __init__(self, feature, label):
+    def __init__(self, feature, label, keep_probability):
         self.feature = feature
         self.label = label
+        self.keep_probability = keep_probability
+        
         self.prediction
         self.optimize
         self.error
@@ -17,7 +19,10 @@ class Model:
     def prediction(self):
         feature_size = 7
         label_size = 4
-        layer_1_size = 30
+        #lstm_hidden_size = 128
+        layer_1_size = 100
+
+        #lstm_cell = tf.contrib.BasicLSTMCell(num_hidden, forget_bias=1.0)
 
         with tf.variable_scope('layer_1') as scope:
             layer_1_weights = tf.Variable(tf.random_uniform(shape=[feature_size, layer_1_size], minval = 0.0001, maxval = 0.001), name="weights")
@@ -25,10 +30,12 @@ class Model:
             layer_1_biases = tf.Variable(tf.constant(0.0, shape = [layer_1_size]), name = "biases")
             layer_1 = tf.nn.relu(tf.matmul(self.feature, layer_1_weights) + layer_1_biases)
 
+        dropout_layer_1 = tf.nn.dropout(layer_1, self.keep_probability)  
+
         with tf.variable_scope('layer_output') as scope:
             output_weights = tf.Variable(tf.random_uniform(shape = [layer_1_size, label_size], minval = 0.0001, maxval = 0.001), name = "weights")
             output_biases = tf.Variable(tf.constant(0.0, shape = [label_size]), name = "biases")
-            output = tf.matmul(layer_1, output_weights) + output_biases
+            output = tf.matmul(dropout_layer_1, output_weights) + output_biases
 
         return output
 

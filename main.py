@@ -22,7 +22,10 @@ class Main:
         
         self.X = tf.placeholder(tf.float32, [None, self.feature_length])
         self.Y = tf.placeholder(tf.float32, [None, self.label_length])
-        self.model = Model(self.X, self.Y)
+
+        self.keep_probability = tf.placeholder(tf.float32)
+
+        self.model = Model(self.X, self.Y, self.keep_probability)
         self.global_step = 0
 
         #replay memory
@@ -180,7 +183,7 @@ class Main:
                         #Get current state of the game
                         state = self.get_state_for_prediction(game.agent_1, game.agent_2, players_turn_first, number_of_turns)
                         #Predict q values
-                        q_value = sess.run(self.model.prediction, { self.X: state })[0]
+                        q_value = sess.run(self.model.prediction, { self.X: state , self.keep_probability: 1.0})[0]
                         print(q_value)
                         action = np.argmax(q_value) + 1
 
@@ -225,7 +228,7 @@ class Main:
                     #Get current state of the game
                     state = self.get_state_for_prediction(game.agent_1, game.agent_2, game.players_turn, number_of_turns)
                     #Predict q values
-                    q_value = sess.run(self.model.prediction, { self.X: state })[0]
+                    q_value = sess.run(self.model.prediction, { self.X: state, self.keep_probability: 1.0 })[0]
                     
                     choose_random = True
                     if force_agent_1_to_lose == False:
@@ -330,21 +333,22 @@ class Main:
                 #Train
                 if train:
                     prev_training_number = 0
-                    for _ in range(1):
-                        avarage_loss = 0
-                        training_data_size = np.size(self.training_data_reward, 0)
-                        random_range = np.arange(training_data_size)
-                        np.random.shuffle(random_range)
+                    for _ in range(10):
+                        #avarage_loss = 0
+                        #training_data_size = np.size(self.training_data_reward, 0)
+                        #random_range = np.arange(training_data_size)
+                        #np.random.shuffle(random_range)
 
-                        for i in range(training_data_size):
-                            random_index = random_range[i]
-                            _, loss = sess.run(self.model.optimize, { self.X: np.reshape(self.training_data_states[random_index], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_q_values[random_index],(-1, 4))})
-                            avarage_loss += loss
-                        #_, loss = sess.run(model.optimize, { X: self.training_data_x, Y: self.training_data_y })
+                        #for i in range(training_data_size):
+                            #random_index = random_range[i]
+                            #_, loss = sess.run(self.model.optimize, { self.X: np.reshape(self.training_data_states[random_index], (-1, self.feature_length)), self.Y: np.reshape(self.training_data_q_values[random_index],(-1, 4))})
+                            #avarage_loss += loss
+                        _, loss = sess.run(self.model.optimize, { self.X: self.training_data_states, self.Y: self.training_data_q_values, self.keep_probability: 0.9 })
                         self.global_step += 1
 
-                        current_accuracy = sess.run(self.model.error, { self.X: self.test_training_data_x, self.Y: self.test_training_data_y })
-                        self.cost_plot.data.append(avarage_loss / training_data_size)#save avarage loss
+                        current_accuracy = sess.run(self.model.error, { self.X: self.test_training_data_x, self.Y: self.test_training_data_y, self.keep_probability: 1.0 })
+                        #self.cost_plot.data.append(avarage_loss / training_data_size)#save avarage loss
+                        self.cost_plot.data.append(loss)
                         self.accuracy_plot.data.append(current_accuracy)
 
                     #print('Saving...')
