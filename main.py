@@ -208,6 +208,7 @@ class Main:
         #self.global_step = 400
         failed_games = 0
         prev_training_number = 0
+        training_data_sets_size = np.empty((0), dtype=int)
 
         with tf.Session() as sess:
 
@@ -222,6 +223,7 @@ class Main:
                 
                 number_of_turns = 0
                 train = False
+                
                 
                 while not game.game_over:
                     
@@ -302,6 +304,7 @@ class Main:
                             #self.log_winning_actions(game.player_1_training_data.actions)
                             game.player_1_training_data.q_values = self.update_q_values(game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
                             self.add_training_data(game.player_1_training_data.states, game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards, True)
+                            training_data_sets_size = np.append(training_data_sets_size, np.size(self.training_data_reward, 0))
                             print(str(np.size(self.training_data_reward, 0)))
                         if did_player_win == False and force_agent_1_to_lose:
                             failed_games = 0
@@ -318,6 +321,7 @@ class Main:
                             #self.log_winning_actions(game.player_2_training_data.actions)
                             game.player_2_training_data.q_values = self.update_q_values(game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
                             self.add_training_data(game.player_2_training_data.states, game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards, True)
+                            training_data_sets_size = np.append(training_data_sets_size, np.size(self.training_data_reward, 0))
                             print(str(np.size(self.training_data_reward, 0)))
                         
                     if number_of_turns >= max_number_of_turns:
@@ -334,7 +338,7 @@ class Main:
                 if train:
                     prev_training_number = 0
                     for _ in range(10):
-                        #avarage_loss = 0
+                        avarage_loss = 0
                         #training_data_size = np.size(self.training_data_reward, 0)
                         #random_range = np.arange(training_data_size)
                         #np.random.shuffle(random_range)
@@ -353,13 +357,42 @@ class Main:
                         # print(x.shape)
                         # print(x)
 
-                        
-                        _, loss = sess.run(self.model.optimize, { self.X: self.training_data_states, self.Y: self.training_data_q_values, self.keep_probability: 0.9 })
-                        self.global_step += 1
+
+                        # print(training_data_sets_size)
+                        # print(training_data_sets_size.shape)
+                        # print(training_data_sets_size[0])
+                        training_data_size = np.size(training_data_sets_size, 0)
+
+                        for i in range(training_data_size):
+
+                            batch_index_start = 0
+                            batch_index_end = training_data_sets_size[i]
+
+                            if i > 0:
+                                batch_index_start = training_data_sets_size[i-1]
+                                batch_index_end = training_data_sets_size[i]
+                            
+                            if i == training_data_size - 1:
+                                batch_index_end = np.size(self.training_data_reward, 0)
+                                
+                            
+
+                            #print("batch_start: {} batch_end: {}".format(str(batch_index_start), str(batch_index_end)))
+                            #print(self.training_data_states[batch_index_start:batch_index_end])
+                                # print(self.training_data_states[batch_index_start:batch_index_end].shape)
+
+                            _, loss = sess.run(self.model.optimize, { self.X: self.training_data_states[batch_index_start:batch_index_end], self.Y: self.training_data_q_values[batch_index_start:batch_index_end], self.keep_probability: 1.0 })
+                            avarage_loss += loss
+
+                            self.global_step += 1
+
 
                         current_accuracy = sess.run(self.model.error, { self.X: self.test_training_data_x, self.Y: self.test_training_data_y, self.keep_probability: 1.0 })
-                        #self.cost_plot.data.append(avarage_loss / training_data_size)#save avarage loss
-                        self.cost_plot.data.append(loss)
+
+                        #print(avarage_loss)
+                        #print(training_data_size)
+                        self.cost_plot.data.append(avarage_loss / training_data_size)#save avarage loss
+                        #self.cost_plot.data.append(loss)
                         self.accuracy_plot.data.append(current_accuracy)
 
                     #print('Saving...')
@@ -371,6 +404,9 @@ class Main:
                     self.training_data_q_values = np.empty((0, self.label_length))#Y or label
                     self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
                     self.training_data_reward = np.empty((0, 1))#rewards vector
+
+                    #print(training_data_sets_size)
+                    training_data_sets_size = np.empty((0),dtype=int)
 
                     #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
                     
@@ -396,5 +432,12 @@ class Main:
 
 #http://localhost:6006/
 
-Main(True).start_training(False, 10000)
-#Main(False).start_testing()
+#Main(True).start_training(False, 1000)
+Main(False).start_testing()
+
+# training_data_states = np.random.rand(10, 7)
+# print(training_data_states.shape)
+
+# print('sep')
+# print(training_data_states[0:2])
+# print(training_data_states[0:2].shape)

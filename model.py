@@ -59,8 +59,14 @@ class Model:
         sum_squared_error = tf.reduce_sum(squared_error, axis=1)
         cost = tf.reduce_mean(sum_squared_error)
         #cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.prediction, labels=self.label))
-        #return tf.train.AdamOptimizer(learning_rate = learning_rate).minimize(cost), cost
-        return tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(cost), cost
+        return tf.train.AdamOptimizer(learning_rate = learning_rate).minimize(cost), cost
+        #return tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(cost), cost
+
+        # optimizer = tf.train.AdamOptimizer(learning_rate = learning_rate)
+        # gradients, variables = zip(*optimizer.compute_gradients(cost))
+        # gradients, _ = tf.clip_by_global_norm(gradients, 5.0)
+        # optimize = optimizer.apply_gradients(zip(gradients, variables))
+        # return optimize, cost
 
     @lazy_property
     def error(self):
