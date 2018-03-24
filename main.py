@@ -7,6 +7,7 @@ import tensorflow as tf
 from model import Model
 from plot import Plot
 from game import Game
+from training_data import Training_data
 
 
 #import matplotlib.pyplot as plt
@@ -29,18 +30,21 @@ class Main:
         self.global_step = 0
 
         #replay memory
-        self.training_data_states = np.empty((0, self.feature_length))#X or Features
-        self.training_data_q_values = np.empty((0, self.label_length))#Y or label
-        self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
-        self.training_data_reward = np.empty((0, 1))#rewards vector
+        #self.training_data_states = np.empty((0, self.feature_length))#X or Features
+        #self.training_data_q_values = np.empty((0, self.label_length))#Y or label
+        #self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
+        #self.training_data_reward = np.empty((0, 1))#rewards vector
+
+        self.training_data = Training_data()
+        self.test_data = Training_data()
 
         self.reward_discount_factor = 0.60
 
         self.agent_1_wins = 0
         self.agent_2_wins = 0
 
-        self.test_training_data_x = np.empty((0, self.feature_length))
-        self.test_training_data_y = np.empty((0, self.label_length))
+        #self.test_training_data_x = np.empty((0, self.feature_length))
+        #self.test_training_data_y = np.empty((0, self.label_length))
 
         self.strategies = ''
 
@@ -56,15 +60,15 @@ class Main:
     # def add_training_data(self, features, labels):
     #     self.training_data_x = np.concatenate((self.training_data_x, features), axis=0)
     #     self.training_data_y = np.concatenate((self.training_data_y, labels), axis=0)
-    def add_training_data(self, states, q_values, actions, rewards, add_to_test_data):
-        self.training_data_states = np.concatenate((self.training_data_states, states), axis=0)#features
-        self.training_data_q_values = np.concatenate((self.training_data_q_values, q_values), axis=0)#labels
-        self.training_data_actions = np.concatenate((self.training_data_actions, actions), axis=0)
-        self.training_data_reward = np.concatenate((self.training_data_reward, rewards), axis=0)
+    # def add_training_data(self, states, q_values, actions, rewards, add_to_test_data):
+    #     self.training_data_states = np.concatenate((self.training_data_states, states), axis=0)#features
+    #     self.training_data_q_values = np.concatenate((self.training_data_q_values, q_values), axis=0)#labels
+    #     self.training_data_actions = np.concatenate((self.training_data_actions, actions), axis=0)
+    #     self.training_data_reward = np.concatenate((self.training_data_reward, rewards), axis=0)
 
-        if add_to_test_data:
-            self.test_training_data_x = np.concatenate((self.test_training_data_x, states), axis=0)
-            self.test_training_data_y = np.concatenate((self.test_training_data_y, q_values), axis=0)
+    #     if add_to_test_data:
+    #         self.test_training_data_x = np.concatenate((self.test_training_data_x, states), axis=0)
+    #         self.test_training_data_y = np.concatenate((self.test_training_data_y, q_values), axis=0)
 
     def get_state_for_prediction(self, user, opponent, is_player_1, current_turn):
         if is_player_1:
@@ -207,8 +211,8 @@ class Main:
         number_of_forced_wins = 10
         #self.global_step = 400
         failed_games = 0
-        prev_training_number = 0
-        training_data_sets_size = np.empty((0), dtype=int)
+        #prev_training_number = 0
+        #training_data_sets_size = np.empty((0), dtype=int)
 
         with tf.Session() as sess:
 
@@ -261,7 +265,7 @@ class Main:
                         #     print('failed game')
                         failed_games += 1
                         
-                        if failed_games > 1000 and np.size(self.training_data_reward, 0) == 0:
+                        if failed_games > 1000 and self.training_data.number_of_examples() == 0:
                             print('Failed Games')
                             print('force agent 1 to lose: {}'.format(str(force_agent_1_to_lose)))
                             print('agent_1: {}'.format(self.get_actions(game.player_1_training_data.actions)))
@@ -271,9 +275,9 @@ class Main:
                             failed_games = 0
                             #max_number_of_turns = np.random.randint(low=8, high=20)
                             game.game_over = True
-                        else:
-                            if np.size(self.training_data_reward, 0) > prev_training_number:
-                                prev_training_number = np.size(self.training_data_reward, 0)
+                        # else:
+                        #     if np.size(self.training_data_reward, 0) > prev_training_number:
+                        #         prev_training_number = np.size(self.training_data_reward, 0)
                                 
                                 # print('force agent 1 to lose: {}'.format(str(force_agent_1_to_lose)))
                                 # print('agent_1: {}'.format(self.get_actions(game.player_1_training_data.actions)))
@@ -300,12 +304,15 @@ class Main:
                             number_of_games += 1
                             #print('player 1 wins')
                             self.agent_1_wins += 1
-                            self.log_everything(game.player_1_training_data, game.player_2_training_data, number_of_games, True)
+                            #self.log_everything(game.player_1_training_data, game.player_2_training_data, number_of_games, True)
                             #self.log_winning_actions(game.player_1_training_data.actions)
+
                             game.player_1_training_data.q_values = self.update_q_values(game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards)
-                            self.add_training_data(game.player_1_training_data.states, game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards, True)
-                            training_data_sets_size = np.append(training_data_sets_size, np.size(self.training_data_reward, 0))
-                            print(str(np.size(self.training_data_reward, 0)))
+                            self.training_data.add_batch(game.player_1_training_data.states, game.player_1_training_data.q_values)
+                            self.test_data.add_batch(game.player_1_training_data.states, game.player_1_training_data.q_values)
+                            #self.add_training_data(game.player_1_training_data.states, game.player_1_training_data.q_values, game.player_1_training_data.actions, game.player_1_training_data.rewards, True)
+                            #training_data_sets_size = np.append(training_data_sets_size, np.size(self.training_data_reward, 0))
+                            #print(str(np.size(self.training_data_reward, 0)))
                         if did_player_win == False and force_agent_1_to_lose:
                             failed_games = 0
                             print('New training data')
@@ -317,26 +324,28 @@ class Main:
                             number_of_games += 1
                             #print('player 2 wins')
                             self.agent_2_wins += 1
-                            self.log_everything(game.player_1_training_data, game.player_2_training_data, number_of_games, False)
+                            #self.log_everything(game.player_1_training_data, game.player_2_training_data, number_of_games, False)
                             #self.log_winning_actions(game.player_2_training_data.actions)
                             game.player_2_training_data.q_values = self.update_q_values(game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards)
-                            self.add_training_data(game.player_2_training_data.states, game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards, True)
-                            training_data_sets_size = np.append(training_data_sets_size, np.size(self.training_data_reward, 0))
-                            print(str(np.size(self.training_data_reward, 0)))
+                            self.training_data.add_batch(game.player_2_training_data.states, game.player_2_training_data.q_values)
+                            self.test_data.add_batch(game.player_2_training_data.states, game.player_2_training_data.q_values)
+                            #self.add_training_data(game.player_2_training_data.states, game.player_2_training_data.q_values, game.player_2_training_data.actions, game.player_2_training_data.rewards, True)
+                            #training_data_sets_size = np.append(training_data_sets_size, np.size(self.training_data_reward, 0))
+                            #print(str(np.size(self.training_data_reward, 0)))
                         
                     if number_of_turns >= max_number_of_turns:
                         break
                     number_of_turns += 1
                 
                 #we only train if we have correct number of wins in the training data
-                if(np.size(self.training_data_reward, 0) > 1 and number_of_games % number_of_forced_wins == 0 ):
+                if(self.training_data.number_of_examples() > 1 and number_of_games % number_of_forced_wins == 0 ):
                     train = True
 
                 
 
                 #Train
                 if train:
-                    prev_training_number = 0
+                    #prev_training_number = 0
                     for _ in range(10):
                         avarage_loss = 0
                         #training_data_size = np.size(self.training_data_reward, 0)
@@ -361,19 +370,46 @@ class Main:
                         # print(training_data_sets_size)
                         # print(training_data_sets_size.shape)
                         # print(training_data_sets_size[0])
-                        training_data_size = np.size(training_data_sets_size, 0)
+                        training_data_length = self.training_data.number_of_examples()
 
-                        for i in range(training_data_size):
+                        random_range = np.arange(training_data_length)
+                        np.random.shuffle(random_range)
 
-                            batch_index_start = 0
-                            batch_index_end = training_data_sets_size[i]
+                        # print(self.training_data.batched_features)
+                        # print(self.training_data.batched_features[0])
+                        # print(self.training_data.batched_labels[0])
 
-                            if i > 0:
-                                batch_index_start = training_data_sets_size[i-1]
-                                batch_index_end = training_data_sets_size[i]
+                        for i in range(training_data_length):
                             
-                            if i == training_data_size - 1:
-                                batch_index_end = np.size(self.training_data_reward, 0)
+                            random_index = random_range[i]
+
+                            state, label = self.training_data.get_batch_by_index(i)
+                            
+                            
+                            #transform list to numpy array
+                            state = np.asarray(state)
+                            label = np.asarray([label])
+
+                            # state = np.reshape(state, (-1, self.feature_length))
+                            # label = np.reshape(label, (-1, self.label_length))
+                            # #print(np.reshape(label.shape, -1))
+
+
+                            #print('about to train')
+                            # print(state)
+                            # print(label)
+
+                            _, loss = sess.run(self.model.optimize, { self.X: state, self.Y: label, self.keep_probability: 1.0 })
+
+                            # batch_index_start = 0
+                            # batch_index_end = training_data_sets_size[i]
+
+                            # if i > 0:
+                            #     batch_index_start = training_data_sets_size[i-1]
+                            #     batch_index_end = training_data_sets_size[i]
+                            
+                            # if i == training_data_size - 1:
+                            #     batch_index_end = np.size(self.training_data_reward, 0)
                                 
                             
 
@@ -381,32 +417,48 @@ class Main:
                             #print(self.training_data_states[batch_index_start:batch_index_end])
                                 # print(self.training_data_states[batch_index_start:batch_index_end].shape)
 
-                            _, loss = sess.run(self.model.optimize, { self.X: self.training_data_states[batch_index_start:batch_index_end], self.Y: self.training_data_q_values[batch_index_start:batch_index_end], self.keep_probability: 1.0 })
+                            #_, loss = sess.run(self.model.optimize, { self.X: self.training_data_states[batch_index_start:batch_index_end], self.Y: self.training_data_q_values[batch_index_start:batch_index_end], self.keep_probability: 1.0 })
                             avarage_loss += loss
 
                             self.global_step += 1
 
+                        final_loss = avarage_loss / training_data_length
+                        self.cost_plot.data.append(final_loss)#save avarage loss
+                        
+                        avarage_accuracy = 0
 
-                        current_accuracy = sess.run(self.model.error, { self.X: self.test_training_data_x, self.Y: self.test_training_data_y, self.keep_probability: 1.0 })
+                        test_data_length = self.test_data.number_of_examples()
 
-                        #print(avarage_loss)
-                        #print(training_data_size)
-                        self.cost_plot.data.append(avarage_loss / training_data_size)#save avarage loss
-                        #self.cost_plot.data.append(loss)
-                        self.accuracy_plot.data.append(current_accuracy)
+                        for i in range(test_data_length):
+
+                            state, label = self.test_data.get_batch_by_index(i)
+                            
+                            #print('about to find accuracy')
+                            #transform list to numpy array
+                            state = np.asarray(state)
+                            label = np.asarray([label])
+
+                            accuracy = sess.run(self.model.error, { self.X: state, self.Y: label, self.keep_probability: 1.0 })
+                            avarage_accuracy += accuracy
+
+                        final_avarage = avarage_accuracy / test_data_length
+                        self.accuracy_plot.data.append(final_avarage)
 
                     #print('Saving...')
                     saver.save(sess, self.checkpoint)
 
-                    print('Epoch {} - Loss {} - Accuracy {} - A1W={} A2W={}'.format(self.global_step, loss, current_accuracy, self.agent_1_wins, self.agent_2_wins))
+                    print('Epoch {} - Loss {} - Accuracy {} - A1W={} A2W={}'.format(self.global_step, final_loss, final_avarage, self.agent_1_wins, self.agent_2_wins))
 
-                    self.training_data_states = np.empty((0, self.feature_length))#X or Features
-                    self.training_data_q_values = np.empty((0, self.label_length))#Y or label
-                    self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
-                    self.training_data_reward = np.empty((0, 1))#rewards vector
+                    #clear training data
+                    self.training_data = Training_data()
+
+                    # self.training_data_states = np.empty((0, self.feature_length))#X or Features
+                    # self.training_data_q_values = np.empty((0, self.label_length))#Y or label
+                    # self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
+                    # self.training_data_reward = np.empty((0, 1))#rewards vector
 
                     #print(training_data_sets_size)
-                    training_data_sets_size = np.empty((0),dtype=int)
+                    #training_data_sets_size = np.empty((0),dtype=int)
 
                     #weights = sess.run(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='layer_1/weights:0'))[0]
                     

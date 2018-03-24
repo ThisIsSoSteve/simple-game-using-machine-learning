@@ -1,6 +1,6 @@
 import numpy as np
 
-class training_data:
+class Training_data:
     def __init__(self):
         self.batched_features = []
         self.batched_labels = []
@@ -36,17 +36,17 @@ class training_data:
         return self.batched_features[random_number], self.batched_labels[random_number]
 
 
-    def get_batch_number(self, number):
-        if number > self.number_of_examples() or number < 0:
+    def get_batch_by_index(self, index_number):
+        if index_number > self.number_of_examples() or index_number < 0:
             return None, None
 
-        return self.batched_features[number], self.batched_labels[number]
+        return self.batched_features[index_number], self.batched_labels[index_number]
        
 
 if __name__ == "__main__":
     print('training_data test')
 
-    data_store = training_data()
+    data_store = Training_data()
 
     #TEST 1
     state = np.array([[1.0, 0.5, 0.4, 1.0, 0.3, 0.5]])
