@@ -14,7 +14,7 @@ from training_data import Training_data
 
 class Main:
     def __init__(self, train):
-        self.feature_length = 7
+        self.feature_length = 6
         self.label_length = 4
 
         self.cost_plot = Plot([], 'Step', 'Cost')
@@ -77,16 +77,14 @@ class Main:
                         opponent.health / opponent.max_health,
                         user.attack / user.max_attack,
                         user.defence / user.max_defence,
-                        user.health / user.max_health,
-                        current_turn / 12])
+                        user.health / user.max_health])
         else:
             new_state = np.array([user.attack / user.max_attack,
                         user.defence / user.max_defence,
                         user.health / user.max_health,
                         opponent.attack / opponent.max_attack,
                         opponent.defence / opponent.max_defence,
-                        opponent.health / opponent.max_health,
-                        current_turn / 12])
+                        opponent.health / opponent.max_health])
 
         return np.reshape(new_state, (-1, self.feature_length))
 
@@ -182,17 +180,26 @@ class Main:
 
                 while not game.game_over:
                     
+                    current_state = np.zeros((0,self.feature_length))
+
                     action = 4
                     if game.players_turn == False:
                         #Get current state of the game
-                        state = self.get_state_for_prediction(game.agent_1, game.agent_2, players_turn_first, number_of_turns)
+                        current_state = self.get_state_for_prediction(game.agent_1, game.agent_2, players_turn_first, number_of_turns)
+
+                        states = game.player_2_training_data.states
+
+                        states = np.append(states, current_state, axis=0)
+
+                        print(states)
+
                         #Predict q values
-                        q_value = sess.run(self.model.prediction, { self.X: state , self.keep_probability: 1.0})[0]
+                        q_value = sess.run(self.model.prediction, { self.X: states , self.keep_probability: 1.0})[0]
                         print(q_value)
                         action = np.argmax(q_value) + 1
 
                     #Play Game
-                    did_player_win = game.run(action)
+                    did_player_win = game.run(current_state, action)
 
                     number_of_turns += 1
 
@@ -232,9 +239,16 @@ class Main:
                 while not game.game_over:
                     
                     #Get current state of the game
-                    state = self.get_state_for_prediction(game.agent_1, game.agent_2, game.players_turn, number_of_turns)
+                    current_state = self.get_state_for_prediction(game.agent_1, game.agent_2, game.players_turn, number_of_turns)
+                    if game.players_turn: #if agents ones turn
+                        states = game.player_1_training_data.states
+                    else:
+                        states = game.player_2_training_data.states
+
+                    states = np.append(states, current_state, axis=0)
+
                     #Predict q values
-                    q_value = sess.run(self.model.prediction, { self.X: state, self.keep_probability: 1.0 })[0]
+                    q_value = sess.run(self.model.prediction, { self.X: states, self.keep_probability: 1.0 })[0]
                     
                     choose_random = True
                     if force_agent_1_to_lose == False:
@@ -258,7 +272,7 @@ class Main:
                         action = np.argmax(q_value) + 1
 
                     #Play Game
-                    did_player_win = game.run_training(state, q_value, action)
+                    did_player_win = game.run_training(current_state, q_value, action)
 
                     if did_player_win == None and number_of_turns >= max_number_of_turns:
                         # if self.global_step > 100:
@@ -420,7 +434,7 @@ class Main:
                             #_, loss = sess.run(self.model.optimize, { self.X: self.training_data_states[batch_index_start:batch_index_end], self.Y: self.training_data_q_values[batch_index_start:batch_index_end], self.keep_probability: 1.0 })
                             avarage_loss += loss
 
-                            self.global_step += 1
+                        self.global_step += 1
 
                         final_loss = avarage_loss / training_data_length
                         self.cost_plot.data.append(final_loss)#save avarage loss
@@ -484,7 +498,7 @@ class Main:
 
 #http://localhost:6006/
 
-#Main(True).start_training(False, 1000)
+#Main(True).start_training(False, 200)
 Main(False).start_testing()
 
 # training_data_states = np.random.rand(10, 7)

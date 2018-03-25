@@ -17,7 +17,7 @@ class Model:
 
     @lazy_property
     def prediction(self):
-        feature_size = 7
+        feature_size = 6
         label_size = 4
         lstm_hidden_size = 128
         layer_1_size = 64

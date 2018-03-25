@@ -66,7 +66,7 @@ class Game:
 
 
     #Justs plays the game no data recording
-    def run(self, opponents_action):
+    def run(self, state, opponents_action):
             if self.players_turn:
                 self.agent_1.print_health()
                 self.game_actions.display_player_actions(self.agent_1)
@@ -92,6 +92,7 @@ class Game:
                 self.agent_2.print_health()
                 self.game_actions.display_ai_chosen_action(self.agent_2, opponents_action)
                 self.game_actions.perfrom(self.agent_2, self.agent_1, opponents_action)
+                self.player_2_training_data.record(state, [0,0,0,0], opponents_action, self.check_for_reward())
 
                 self.players_turn = True
 
