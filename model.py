@@ -27,7 +27,7 @@ class Model:
         lstm_features = tf.reshape(self.feature, [1,batch_size, feature_size])
         #https://machinelearningmastery.com/reshape-input-data-long-short-term-memory-networks-keras/
         lstm_cell =  tf.nn.rnn_cell.BasicLSTMCell(lstm_hidden_size, forget_bias=1.0)
-        outputs, states = tf.nn.dynamic_rnn(lstm_cell, lstm_features, dtype=tf.float32)
+        outputs, states = tf.nn.dynamic_rnn(lstm_cell, lstm_features, dtype=tf.float32, sequence_length=[batch_size])
         
         # print(outputs.get_shape())
         #reshaped_output = tf.reshape(outputs)

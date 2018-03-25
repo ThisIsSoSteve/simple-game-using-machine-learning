@@ -35,8 +35,10 @@ class Main:
         #self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
         #self.training_data_reward = np.empty((0, 1))#rewards vector
 
-        self.training_data = Training_data()
-        self.test_data = Training_data()
+        self.max_turns = 13
+
+        self.training_data = Training_data(self.max_turns)
+        self.test_data = Training_data(self.max_turns)
 
         self.reward_discount_factor = 0.60
 
@@ -191,6 +193,13 @@ class Main:
 
                         states = np.append(states, current_state, axis=0)
 
+                        #add padding
+                        new_records_size = self.max_turns - len(states)
+
+                        padding_array = np.zeros((new_records_size, self.feature_length))
+
+                        states = np.append(states, padding_array,0)
+
                         print(states)
 
                         #Predict q values
@@ -211,7 +220,7 @@ class Main:
         train = False
         saver = tf.train.Saver()
         
-        max_number_of_turns = 12
+        max_number_of_turns = self.max_turns - 1#12
         number_of_games = 0
         players_turn_first = True
         force_agent_1_to_lose = False
@@ -246,6 +255,15 @@ class Main:
                         states = game.player_2_training_data.states
 
                     states = np.append(states, current_state, axis=0)
+
+                    #add padding
+                    new_records_size = self.max_turns - len(states)
+
+                    padding_array = np.zeros((new_records_size, self.feature_length))
+
+                    states = np.append(states, padding_array,0)
+
+                    #print(states)
 
                     #Predict q values
                     q_value = sess.run(self.model.prediction, { self.X: states, self.keep_probability: 1.0 })[0]
@@ -464,7 +482,7 @@ class Main:
                     print('Epoch {} - Loss {} - Accuracy {} - A1W={} A2W={}'.format(self.global_step, final_loss, final_avarage, self.agent_1_wins, self.agent_2_wins))
 
                     #clear training data
-                    self.training_data = Training_data()
+                    self.training_data = Training_data(self.max_turns)
 
                     # self.training_data_states = np.empty((0, self.feature_length))#X or Features
                     # self.training_data_q_values = np.empty((0, self.label_length))#Y or label
@@ -498,8 +516,8 @@ class Main:
 
 #http://localhost:6006/
 
-#Main(True).start_training(False, 200)
-Main(False).start_testing()
+Main(True).start_training(False, 200)
+#Main(False).start_testing()
 
 # training_data_states = np.random.rand(10, 7)
 # print(training_data_states.shape)

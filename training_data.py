@@ -1,9 +1,10 @@
 import numpy as np
 
 class Training_data:
-    def __init__(self):
+    def __init__(self, max_state_length):
         self.batched_features = []
         self.batched_labels = []
+        self.max_state_length = max_state_length
 
     def number_of_examples(self):
         number_of_batched_features = len(self.batched_features)
@@ -28,7 +29,16 @@ class Training_data:
             # print('feature = {}'.format(training_features[0:i+1]))
             # print('label = {}'.format(training_labels[i]))
 
-            self.batched_features.append(training_features[0:i+1])
+            #add padding states
+            temp_training_features = training_features[0:i+1]
+            new_records_size = self.max_state_length - len(temp_training_features)
+
+            padding_array = np.zeros((new_records_size, len(temp_training_features[0])))
+
+            temp_training_features = np.append(temp_training_features, padding_array,0)
+
+
+            self.batched_features.append(temp_training_features)
             self.batched_labels.append(training_labels[i])
 
     def get_random_batch(self):
@@ -46,7 +56,7 @@ class Training_data:
 if __name__ == "__main__":
     print('training_data test')
 
-    data_store = Training_data()
+    data_store = Training_data(12)
 
     #TEST 1
     state = np.array([[1.0, 0.5, 0.4, 1.0, 0.3, 0.5]])
