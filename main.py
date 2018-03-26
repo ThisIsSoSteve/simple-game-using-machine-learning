@@ -24,9 +24,10 @@ class Main:
         self.X = tf.placeholder(tf.float32, [None, self.feature_length])
         self.Y = tf.placeholder(tf.float32, [None, self.label_length])
 
+        self.sequence_length = tf.placeholder(tf.float32)
         self.keep_probability = tf.placeholder(tf.float32)
 
-        self.model = Model(self.X, self.Y, self.keep_probability)
+        self.model = Model(self.X, self.Y, self.sequence_length, self.keep_probability)
         self.global_step = 0
 
         #replay memory
@@ -193,8 +194,10 @@ class Main:
 
                         states = np.append(states, current_state, axis=0)
 
+                        sequence_length = len(states)
+
                         #add padding
-                        new_records_size = self.max_turns - len(states)
+                        new_records_size = self.max_turns - sequence_length
 
                         padding_array = np.zeros((new_records_size, self.feature_length))
 
@@ -203,7 +206,7 @@ class Main:
                         print(states)
 
                         #Predict q values
-                        q_value = sess.run(self.model.prediction, { self.X: states , self.keep_probability: 1.0})[0]
+                        q_value = sess.run(self.model.prediction, { self.X: states, self.sequence_length: sequence_length, self.keep_probability: 1.0})[0]
                         print(q_value)
                         action = np.argmax(q_value) + 1
 
@@ -256,8 +259,10 @@ class Main:
 
                     states = np.append(states, current_state, axis=0)
 
+                    sequence_length = len(states)
+                    
                     #add padding
-                    new_records_size = self.max_turns - len(states)
+                    new_records_size = self.max_turns - sequence_length
 
                     padding_array = np.zeros((new_records_size, self.feature_length))
 
@@ -266,7 +271,7 @@ class Main:
                     #print(states)
 
                     #Predict q values
-                    q_value = sess.run(self.model.prediction, { self.X: states, self.keep_probability: 1.0 })[0]
+                    q_value = sess.run(self.model.prediction, { self.X: states, self.sequence_length: sequence_length, self.keep_probability: 1.0 })[0]
                     
                     choose_random = True
                     if force_agent_1_to_lose == False:
@@ -415,7 +420,7 @@ class Main:
                             
                             random_index = random_range[i]
 
-                            state, label = self.training_data.get_batch_by_index(i)
+                            state, label, sequence_length = self.training_data.get_batch_by_index(i)
                             
                             
                             #transform list to numpy array
@@ -431,7 +436,7 @@ class Main:
                             # print(state)
                             # print(label)
 
-                            _, loss = sess.run(self.model.optimize, { self.X: state, self.Y: label, self.keep_probability: 1.0 })
+                            _, loss = sess.run(self.model.optimize, { self.X: state, self.Y: label, self.sequence_length: sequence_length, self.keep_probability: 1.0 })
 
                             # batch_index_start = 0
                             # batch_index_end = training_data_sets_size[i]
@@ -463,14 +468,14 @@ class Main:
 
                         for i in range(test_data_length):
 
-                            state, label = self.test_data.get_batch_by_index(i)
+                            state, label, sequence_length = self.test_data.get_batch_by_index(i)
                             
                             #print('about to find accuracy')
                             #transform list to numpy array
                             state = np.asarray(state)
                             label = np.asarray([label])
 
-                            accuracy = sess.run(self.model.error, { self.X: state, self.Y: label, self.keep_probability: 1.0 })
+                            accuracy = sess.run(self.model.error, { self.X: state, self.Y: label, self.sequence_length: sequence_length, self.keep_probability: 1.0 })
                             avarage_accuracy += accuracy
 
                         final_avarage = avarage_accuracy / test_data_length

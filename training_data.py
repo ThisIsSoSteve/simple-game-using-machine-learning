@@ -4,6 +4,7 @@ class Training_data:
     def __init__(self, max_state_length):
         self.batched_features = []
         self.batched_labels = []
+        self.sequence_lengths = []
         self.max_state_length = max_state_length
 
     def number_of_examples(self):
@@ -31,6 +32,10 @@ class Training_data:
 
             #add padding states
             temp_training_features = training_features[0:i+1]
+
+            #record sequence_lengths
+            self.sequence_lengths.append(float(len(temp_training_features)))
+
             new_records_size = self.max_state_length - len(temp_training_features)
 
             padding_array = np.zeros((new_records_size, len(temp_training_features[0])))
@@ -43,14 +48,14 @@ class Training_data:
 
     def get_random_batch(self):
         random_number = np.random.randint(low=0, high=self.number_of_examples())
-        return self.batched_features[random_number], self.batched_labels[random_number]
+        return self.batched_features[random_number], self.batched_labels[random_number], self.sequence_lengths[random_number]
 
 
     def get_batch_by_index(self, index_number):
         if index_number > self.number_of_examples() or index_number < 0:
-            return None, None
+            return None, None, None
 
-        return self.batched_features[index_number], self.batched_labels[index_number]
+        return self.batched_features[index_number], self.batched_labels[index_number], self.sequence_lengths[index_number]
        
 
 if __name__ == "__main__":

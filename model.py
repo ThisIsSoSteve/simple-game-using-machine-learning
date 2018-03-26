@@ -6,10 +6,11 @@ using structure from https://danijar.com/structuring-your-tensorflow-models/
 '''
 class Model:
 
-    def __init__(self, feature, label, keep_probability):
+    def __init__(self, feature, label, sequence_length, keep_probability):
         self.feature = feature
         self.label = label
         self.keep_probability = keep_probability
+        self.sequence_length = sequence_length
         
         self.prediction
         self.optimize
@@ -20,14 +21,27 @@ class Model:
         feature_size = 6
         label_size = 4
         lstm_hidden_size = 128
-        layer_1_size = 64
+        #layer_1_size = 64
+
+        batch_size = 13
 
         #print(self.feature.get_shape())
-        batch_size = tf.shape(self.feature)[0]
+        #batch_size = tf.shape(self.feature)[0]
         lstm_features = tf.reshape(self.feature, [1,batch_size, feature_size])
         #https://machinelearningmastery.com/reshape-input-data-long-short-term-memory-networks-keras/
-        lstm_cell =  tf.nn.rnn_cell.BasicLSTMCell(lstm_hidden_size, forget_bias=1.0)
-        outputs, states = tf.nn.dynamic_rnn(lstm_cell, lstm_features, dtype=tf.float32, sequence_length=[batch_size])
+        
+        #tf.nn.rnn_cell.GRUCell(lstm_hidden_size)
+        #init_state = tf.get_variable('init_state', [1, lstm_hidden_size], initializer=tf.random_uniform_initializer(0.0001, 0.001))
+
+        #init_state = tf.Variable(tf.random_uniform(shape=[1, lstm_hidden_size], minval = 0.0001, maxval = 0.001), name="init_state")
+        #init_state = tf.tile(init_state, [batch_size, 1])
+
+        lstm_cell =  tf.nn.rnn_cell.BasicLSTMCell(lstm_hidden_size)
+
+        init_state = lstm_cell.zero_state(1, tf.float32)
+        
+
+        outputs, states = tf.nn.dynamic_rnn(lstm_cell, lstm_features, initial_state=init_state, sequence_length=self.sequence_length)#initial_state=init_state,
         
         # print(outputs.get_shape())
         #reshaped_output = tf.reshape(outputs)
