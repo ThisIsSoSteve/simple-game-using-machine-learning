@@ -36,7 +36,7 @@ class Main:
         #self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
         #self.training_data_reward = np.empty((0, 1))#rewards vector
 
-        self.max_turns = 13
+        self.max_turns = 30
 
         self.training_data = Training_data(self.max_turns)
         self.test_data = Training_data(self.max_turns)
@@ -203,7 +203,7 @@ class Main:
 
                         states = np.append(states, padding_array,0)
 
-                        print(states)
+                        #print(states)
 
                         #Predict q values
                         q_value = sess.run(self.model.prediction, { self.X: states, self.sequence_length: sequence_length, self.keep_probability: 1.0})[0]
@@ -311,7 +311,7 @@ class Main:
                             #break
                             failed_games = 0
                             #max_number_of_turns = np.random.randint(low=8, high=20)
-                            game.game_over = True
+                        game.game_over = True
                         # else:
                         #     if np.size(self.training_data_reward, 0) > prev_training_number:
                         #         prev_training_number = np.size(self.training_data_reward, 0)
@@ -320,7 +320,7 @@ class Main:
                                 # print('agent_1: {}'.format(self.get_actions(game.player_1_training_data.actions)))
                                 # print('agent_2: {}'.format(self.get_actions(game.player_2_training_data.actions)))
                                 
-                    elif game.game_over:
+                    elif game.game_over and did_player_win != None:
                         
                         
                         #record winning data
@@ -383,7 +383,7 @@ class Main:
                 #Train
                 if train:
                     #prev_training_number = 0
-                    for _ in range(10):
+                    for _ in range(1):
                         avarage_loss = 0
                         #training_data_size = np.size(self.training_data_reward, 0)
                         #random_range = np.arange(training_data_size)
@@ -513,6 +513,8 @@ class Main:
 
                 if number_of_games == max_iterations:
                     break
+
+
             # with open('data/charts/strategies.txt', 'w') as file:
             #     file.write(self.strategies)
 #using tensorboard
@@ -521,7 +523,7 @@ class Main:
 
 #http://localhost:6006/
 
-Main(True).start_training(False, 200)
+Main(True).start_training(False, 1000)
 #Main(False).start_testing()
 
 # training_data_states = np.random.rand(10, 7)

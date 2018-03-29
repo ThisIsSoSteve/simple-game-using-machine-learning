@@ -20,14 +20,16 @@ class Model:
     def prediction(self):
         feature_size = 6
         label_size = 4
-        lstm_hidden_size = 128
+        lstm_hidden_size = 32
         #layer_1_size = 64
 
-        batch_size = 13
+        batch_size = 30
 
         #print(self.feature.get_shape())
         #batch_size = tf.shape(self.feature)[0]
         lstm_features = tf.reshape(self.feature, [1,batch_size, feature_size])
+
+        lstm_features=tf.unstack(lstm_features, batch_size, 1)
         #https://machinelearningmastery.com/reshape-input-data-long-short-term-memory-networks-keras/
         
         #tf.nn.rnn_cell.GRUCell(lstm_hidden_size)
@@ -38,10 +40,10 @@ class Model:
 
         lstm_cell =  tf.nn.rnn_cell.BasicLSTMCell(lstm_hidden_size)
 
-        init_state = lstm_cell.zero_state(1, tf.float32)
-        
+        #init_state = lstm_cell.zero_state(1, tf.float32)
+        outputs, states = tf.nn.static_rnn(lstm_cell, lstm_features, dtype=tf.float32)#initial_state=init_state,
 
-        outputs, states = tf.nn.dynamic_rnn(lstm_cell, lstm_features, initial_state=init_state, sequence_length=self.sequence_length)#initial_state=init_state,
+        #outputs, states = tf.nn.dynamic_rnn(lstm_cell, lstm_features, initial_state=init_state, sequence_length=self.sequence_length)#initial_state=init_state,
         
         # print(outputs.get_shape())
         #reshaped_output = tf.reshape(outputs)
