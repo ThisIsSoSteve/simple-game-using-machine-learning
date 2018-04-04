@@ -20,16 +20,16 @@ class Model:
     def prediction(self):
         feature_size = 6
         label_size = 4
-        lstm_hidden_size = 32
+        lstm_hidden_size = 128
         #layer_1_size = 64
 
-        batch_size = 30
+        batch_size = 7
 
         #print(self.feature.get_shape())
         #batch_size = tf.shape(self.feature)[0]
-        lstm_features = tf.reshape(self.feature, [1,batch_size, feature_size])
+        #lstm_features = tf.reshape(self.feature, [1,batch_size, feature_size])
 
-        lstm_features=tf.unstack(lstm_features, batch_size, 1)
+        lstm_features=tf.unstack(self.feature, batch_size, 1)
         #https://machinelearningmastery.com/reshape-input-data-long-short-term-memory-networks-keras/
         
         #tf.nn.rnn_cell.GRUCell(lstm_hidden_size)
@@ -38,7 +38,7 @@ class Model:
         #init_state = tf.Variable(tf.random_uniform(shape=[1, lstm_hidden_size], minval = 0.0001, maxval = 0.001), name="init_state")
         #init_state = tf.tile(init_state, [batch_size, 1])
 
-        lstm_cell =  tf.nn.rnn_cell.BasicLSTMCell(lstm_hidden_size)
+        lstm_cell =  tf.nn.rnn_cell.GRUCell(lstm_hidden_size)
 
         #init_state = lstm_cell.zero_state(1, tf.float32)
         outputs, states = tf.nn.static_rnn(lstm_cell, lstm_features, dtype=tf.float32)#initial_state=init_state,
@@ -75,13 +75,13 @@ class Model:
 
     @lazy_property
     def optimize(self):
-        learning_rate = 0.01
+        learning_rate = 0.1
         squared_error = tf.square(self.prediction - self.label)
         sum_squared_error = tf.reduce_sum(squared_error, axis=1)
         cost = tf.reduce_mean(sum_squared_error)
         #cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.prediction, labels=self.label))
-        return tf.train.AdamOptimizer(learning_rate = learning_rate).minimize(cost), cost
-        #return tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(cost), cost
+        #return tf.train.AdamOptimizer(learning_rate = learning_rate).minimize(cost), cost
+        return tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(cost), cost
 
         # optimizer = tf.train.AdamOptimizer(learning_rate = learning_rate)
         # gradients, variables = zip(*optimizer.compute_gradients(cost))

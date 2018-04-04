@@ -46,16 +46,42 @@ class Training_data:
             self.batched_features.append(temp_training_features)
             self.batched_labels.append(training_labels[i])
 
-    def get_random_batch(self):
-        random_number = np.random.randint(low=0, high=self.number_of_examples())
-        return self.batched_features[random_number], self.batched_labels[random_number], self.sequence_lengths[random_number]
+    def get_random_batch(self, number_of_batches = 1):
+        
+        if number_of_batches > self.number_of_examples():
+            number_of_batches = self.number_of_examples()
+
+        returning_features = []
+        returning_labels = []
+        returning_sequence_lengths = []
+
+        for _ in range(number_of_batches):
+            random_number = np.random.randint(low=0, high=self.number_of_examples())
+
+            returning_features.append(self.batched_features[random_number])
+            returning_labels.append(self.batched_labels[random_number])
+            returning_sequence_lengths.append(self.sequence_lengths[random_number])
+
+        batched_feature = np.reshape(returning_features,[number_of_batches, self.max_state_length, 6])
+        returning_labels =  np.reshape(returning_labels, [number_of_batches, 4])
+
+        return batched_feature, returning_labels, returning_sequence_lengths
 
 
     def get_batch_by_index(self, index_number):
         if index_number > self.number_of_examples() or index_number < 0:
             return None, None, None
 
-        return self.batched_features[index_number], self.batched_labels[index_number], self.sequence_lengths[index_number]
+        batched_feature = self.batched_features[index_number]
+        batched_feature = np.reshape(batched_feature,[1, len(batched_feature), len(batched_feature[0])])
+
+        return batched_feature, self.batched_labels[index_number], self.sequence_lengths[index_number]
+
+    def get_all_batches(self):
+
+        batched_feature = np.reshape(self.batched_features,[len(self.batched_features), self.max_state_length, 6])
+
+        return batched_feature, self.batched_labels, self.sequence_lengths
        
 
 if __name__ == "__main__":

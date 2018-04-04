@@ -20,8 +20,11 @@ class Main:
         self.cost_plot = Plot([], 'Step', 'Cost')
         self.accuracy_plot = Plot([], 'Step', 'Accuracy')
         self.checkpoint = 'data/checkpoints/turn_based_ai.ckpt'
+
+        self.max_turns_total = 13
+        self.max_turns_per_player = 7#int(self.max_turns_total/2)
         
-        self.X = tf.placeholder(tf.float32, [None, self.feature_length])
+        self.X = tf.placeholder(tf.float32, [None, self.max_turns_per_player, self.feature_length])
         self.Y = tf.placeholder(tf.float32, [None, self.label_length])
 
         self.sequence_length = tf.placeholder(tf.float32)
@@ -36,10 +39,8 @@ class Main:
         #self.training_data_actions = np.empty((0, self.label_length))#the actions that are taken for a state
         #self.training_data_reward = np.empty((0, 1))#rewards vector
 
-        self.max_turns = 30
-
-        self.training_data = Training_data(self.max_turns)
-        self.test_data = Training_data(self.max_turns)
+        self.training_data = Training_data(self.max_turns_per_player)
+        self.test_data = Training_data(self.max_turns_per_player)
 
         self.reward_discount_factor = 0.60
 
@@ -98,11 +99,11 @@ class Main:
             action_index = np.argmax(actions[i])
             reward = rewards[i]
 
-            if i == range_length:
-                q_values[i][action_index] = reward
-            else:
-                q_values[i][action_index] = reward + self.reward_discount_factor * np.max(q_values[i + 1])
-            #print(q_values[i])
+            # if i == range_length:
+            #     q_values[i][action_index] = reward
+            # else:
+            #     q_values[i][action_index] = reward + self.reward_discount_factor * np.max(q_values[i + 1])
+            q_values[i] = actions[i]
         return q_values
 
     def get_epsilon_greedy(self, iteration):
@@ -197,11 +198,13 @@ class Main:
                         sequence_length = len(states)
 
                         #add padding
-                        new_records_size = self.max_turns - sequence_length
+                        new_records_size = self.max_turns_per_player - sequence_length
 
                         padding_array = np.zeros((new_records_size, self.feature_length))
 
                         states = np.append(states, padding_array,0)
+
+                        states = np.reshape(states, [1, len(states), self.feature_length])
 
                         #print(states)
 
@@ -223,7 +226,7 @@ class Main:
         train = False
         saver = tf.train.Saver()
         
-        max_number_of_turns = self.max_turns - 1#12
+        max_number_of_turns = self.max_turns_total - 1#12
         number_of_games = 0
         players_turn_first = True
         force_agent_1_to_lose = False
@@ -262,11 +265,13 @@ class Main:
                     sequence_length = len(states)
                     
                     #add padding
-                    new_records_size = self.max_turns - sequence_length
+                    new_records_size = self.max_turns_per_player - sequence_length
 
                     padding_array = np.zeros((new_records_size, self.feature_length))
 
                     states = np.append(states, padding_array,0)
+
+                    states = np.reshape(states, [1, len(states), self.feature_length])
 
                     #print(states)
 
@@ -384,7 +389,7 @@ class Main:
                 if train:
                     #prev_training_number = 0
                     for _ in range(1):
-                        avarage_loss = 0
+                        #avarage_loss = 0
                         #training_data_size = np.size(self.training_data_reward, 0)
                         #random_range = np.arange(training_data_size)
                         #np.random.shuffle(random_range)
@@ -407,87 +412,62 @@ class Main:
                         # print(training_data_sets_size)
                         # print(training_data_sets_size.shape)
                         # print(training_data_sets_size[0])
-                        training_data_length = self.training_data.number_of_examples()
+                        #training_data_length = self.training_data.number_of_examples()
 
-                        random_range = np.arange(training_data_length)
-                        np.random.shuffle(random_range)
+                        #random_range = np.arange(training_data_length)
+                        #np.random.shuffle(random_range)
 
                         # print(self.training_data.batched_features)
                         # print(self.training_data.batched_features[0])
                         # print(self.training_data.batched_labels[0])
 
-                        for i in range(training_data_length):
+                        #for i in range(training_data_length):
                             
-                            random_index = random_range[i]
+                        #random_index = random_range[i]
 
-                            state, label, sequence_length = self.training_data.get_batch_by_index(i)
-                            
-                            
-                            #transform list to numpy array
-                            state = np.asarray(state)
-                            label = np.asarray([label])
+                        # state, label, sequence_length = self.training_data.get_random_batch(10)
 
-                            # state = np.reshape(state, (-1, self.feature_length))
-                            # label = np.reshape(label, (-1, self.label_length))
-                            # #print(np.reshape(label.shape, -1))
+                        # _, loss = sess.run(self.model.optimize, { self.X: state, self.Y: label, self.sequence_length: sequence_length, self.keep_probability: 1.0 })
 
+                        state, label, sequence_length = self.test_data.get_all_batches()
 
-                            #print('about to train')
-                            # print(state)
-                            # print(label)
-
-                            _, loss = sess.run(self.model.optimize, { self.X: state, self.Y: label, self.sequence_length: sequence_length, self.keep_probability: 1.0 })
-
-                            # batch_index_start = 0
-                            # batch_index_end = training_data_sets_size[i]
-
-                            # if i > 0:
-                            #     batch_index_start = training_data_sets_size[i-1]
-                            #     batch_index_end = training_data_sets_size[i]
-                            
-                            # if i == training_data_size - 1:
-                            #     batch_index_end = np.size(self.training_data_reward, 0)
-                                
-                            
-
-                            #print("batch_start: {} batch_end: {}".format(str(batch_index_start), str(batch_index_end)))
-                            #print(self.training_data_states[batch_index_start:batch_index_end])
-                                # print(self.training_data_states[batch_index_start:batch_index_end].shape)
-
-                            #_, loss = sess.run(self.model.optimize, { self.X: self.training_data_states[batch_index_start:batch_index_end], self.Y: self.training_data_q_values[batch_index_start:batch_index_end], self.keep_probability: 1.0 })
-                            avarage_loss += loss
+                        _, loss = sess.run(self.model.optimize, { self.X: state, self.Y: label, self.sequence_length: sequence_length, self.keep_probability: 1.0 })
+                        
+                            #avarage_loss += loss
 
                         self.global_step += 1
 
-                        final_loss = avarage_loss / training_data_length
-                        self.cost_plot.data.append(final_loss)#save avarage loss
+                        #final_loss = avarage_loss / training_data_length
+                        self.cost_plot.data.append(loss)#save avarage loss
                         
-                        avarage_accuracy = 0
+                        #avarage_accuracy = 0
 
-                        test_data_length = self.test_data.number_of_examples()
+                        #test_data_length = self.test_data.number_of_examples()
 
-                        for i in range(test_data_length):
+                        #for i in range(test_data_length):
 
-                            state, label, sequence_length = self.test_data.get_batch_by_index(i)
-                            
-                            #print('about to find accuracy')
-                            #transform list to numpy array
-                            state = np.asarray(state)
-                            label = np.asarray([label])
+                        #state, label, sequence_length = self.test_data.get_batch_by_index(i)
+                        
+                        #print('about to find accuracy')
+                        #transform list to numpy array
+                        #state = np.asarray(state)
+                        #label = np.asarray([label])
 
-                            accuracy = sess.run(self.model.error, { self.X: state, self.Y: label, self.sequence_length: sequence_length, self.keep_probability: 1.0 })
-                            avarage_accuracy += accuracy
+                        state, label, sequence_length = self.test_data.get_all_batches()
 
-                        final_avarage = avarage_accuracy / test_data_length
-                        self.accuracy_plot.data.append(final_avarage)
+                        accuracy = sess.run(self.model.error, { self.X: state, self.Y: label, self.sequence_length: sequence_length, self.keep_probability: 1.0 })
+                        #avarage_accuracy += accuracy
+
+                        #final_avarage = avarage_accuracy / test_data_length
+                        self.accuracy_plot.data.append(accuracy)
 
                     #print('Saving...')
                     saver.save(sess, self.checkpoint)
 
-                    print('Epoch {} - Loss {} - Accuracy {} - A1W={} A2W={}'.format(self.global_step, final_loss, final_avarage, self.agent_1_wins, self.agent_2_wins))
+                    print('Epoch {} - Loss {} - Accuracy {} - A1W={} A2W={}'.format(self.global_step, loss, accuracy, self.agent_1_wins, self.agent_2_wins))
 
                     #clear training data
-                    self.training_data = Training_data(self.max_turns)
+                    self.training_data = Training_data(self.max_turns_per_player)
 
                     # self.training_data_states = np.empty((0, self.feature_length))#X or Features
                     # self.training_data_q_values = np.empty((0, self.label_length))#Y or label
@@ -523,8 +503,8 @@ class Main:
 
 #http://localhost:6006/
 
-Main(True).start_training(False, 1000)
-#Main(False).start_testing()
+#Main(True).start_training(False, 1000)
+Main(False).start_testing()
 
 # training_data_states = np.random.rand(10, 7)
 # print(training_data_states.shape)
