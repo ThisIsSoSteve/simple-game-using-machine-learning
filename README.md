@@ -1,7 +1,7 @@
 # simple-game-using-machine-learning
 A simple game using machine learning to over time beat the player (WIP)
 
- Tensorflow 1.4
+ Tensorflow 1.7
  python 3.6
 
-starting to implement Q learning
+implementing Policy Gradients
